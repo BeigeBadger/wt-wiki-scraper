@@ -228,3 +228,14 @@ _Pvt_Extensions
 # FAKE - F# Make
 .fake/
 *.suo
+ConsoleScraper/ConsoleScraper/obj/Debug/ConsoleScraper.pdb
+ConsoleScraper/ConsoleScraper/obj/Debug/ConsoleScraper.csprojResolveAssemblyReference.cache
+*.cache
+ConsoleScraper/ConsoleScraper/obj/Debug/ConsoleScraper.csproj.FileListAbsolute.txt
+*.pdb
+ConsoleScraper/.vs/ConsoleScraper/v14/.suo
+*.cache
+ConsoleScraper/ConsoleScraper/obj/Debug/ConsoleScraper.csproj.FileListAbsolute.txt
+*.suo
+ConsoleScraper/ConsoleScraper/bin/Debug/ConsoleScraper.exe
+*.cache

@@ -30,3 +30,14 @@ E:\Matt\GitHub\WT-BR-Viewer\ConsoleScraper\ConsoleScraper\bin\Debug\Newtonsoft.J
 C:\Users\Matt\Documents\GitHub\wt-wiki-scraper\ConsoleScraper\ConsoleScraper\bin\Debug\ConsoleScraper.exe.config
 C:\Users\Matt\Documents\GitHub\wt-wiki-scraper\ConsoleScraper\ConsoleScraper\obj\Debug\ConsoleScraper.exe
 C:\Users\Matt\Documents\GitHub\wt-wiki-scraper\ConsoleScraper\ConsoleScraper\obj\Debug\ConsoleScraper.pdb
+C:\Users\Matty.Matt\Documents\GitHub\wt-wiki-scraper\ConsoleScraper\ConsoleScraper\bin\Debug\ConsoleScraper.exe.config
+C:\Users\Matty.Matt\Documents\GitHub\wt-wiki-scraper\ConsoleScraper\ConsoleScraper\obj\Debug\ConsoleScraper.exe
+C:\Users\Matty.Matt\Documents\GitHub\wt-wiki-scraper\ConsoleScraper\ConsoleScraper\obj\Debug\ConsoleScraper.pdb
+C:\Users\Matty.Matt\Documents\GitHub\wt-wiki-scraper\ConsoleScraper\ConsoleScraper\bin\Debug\ConsoleScraper.exe
+C:\Users\Matty.Matt\Documents\GitHub\wt-wiki-scraper\ConsoleScraper\ConsoleScraper\bin\Debug\ConsoleScraper.pdb
+C:\Users\Matty.Matt\Documents\GitHub\wt-wiki-scraper\ConsoleScraper\ConsoleScraper\bin\Debug\HtmlAgilityPack.dll
+C:\Users\Matty.Matt\Documents\GitHub\wt-wiki-scraper\ConsoleScraper\ConsoleScraper\bin\Debug\Newtonsoft.Json.dll
+C:\Users\Matty.Matt\Documents\GitHub\wt-wiki-scraper\ConsoleScraper\ConsoleScraper\bin\Debug\HtmlAgilityPack.pdb
+C:\Users\Matty.Matt\Documents\GitHub\wt-wiki-scraper\ConsoleScraper\ConsoleScraper\bin\Debug\HtmlAgilityPack.xml
+C:\Users\Matty.Matt\Documents\GitHub\wt-wiki-scraper\ConsoleScraper\ConsoleScraper\bin\Debug\Newtonsoft.Json.xml
+C:\Users\Matty.Matt\Documents\GitHub\wt-wiki-scraper\ConsoleScraper\ConsoleScraper\obj\Debug\ConsoleScraper.csprojResolveAssemblyReference.cache
