@@ -234,3 +234,8 @@ _Pvt_Extensions
 # FAKE - F# Make
 .fake/
 *.suo
+*.suo
+ConsoleScraper/ConsoleScraper/bin/Debug/ConsoleScraper.exe
+*.pdb
+ConsoleScraper/ConsoleScraper/obj/Debug/ConsoleScraper.exe
+*.pdb
