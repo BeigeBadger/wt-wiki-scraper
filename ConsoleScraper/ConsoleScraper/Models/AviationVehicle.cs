@@ -6,7 +6,7 @@ namespace ConsoleScraper.Models
 	public interface IAviationVehicle
 	{
 		#region Properties
-		string Title { get; set; }
+		string Name { get; set; }
 		CountryEnum Country { get; set; }
 		AviationVehicleTypeEnum VehicleType { get; set; }
 		int Rank { get; set; }
@@ -19,17 +19,17 @@ namespace ConsoleScraper.Models
 		double ClimbRate { get; set; }
 		TimeSpan TimeForFreeRepair { get; set; }
 		long MaxRepairCost { get; set; }
-		long Cost { get; set; }
-		VehicleCostUnit PurchaseCostUnit { get; set; }
-		VehicleCostUnit MaxRepairCostUnit { get; set; }
-		VehicleSpeedUnit MaxSpeedUnit { get; set; }
-		VehicleEnginePowerUnit EnginePowerUnit { get; set; }
+		long PurchaseCost { get; set; }
+		VehicleCostUnitHelper PurchaseCostUnit { get; set; }
+		VehicleCostUnitHelper MaxRepairCostUnit { get; set; }
+		VehicleSpeedUnitHelper MaxSpeedUnit { get; set; }
+		VehicleEnginePowerUnitHelper EnginePowerUnit { get; set; }
 		#endregion
 	}
 
 	public class AviationVehicle : IVehicle, IAviationVehicle
 	{
-		public string Title { get; set; }
+		public string Name { get; set; }
 		public CountryEnum Country { get; set; }
 		public AviationVehicleTypeEnum VehicleType { get; set; }
 		public int Rank { get; set; }
@@ -42,10 +42,10 @@ namespace ConsoleScraper.Models
 		public double ClimbRate { get; set; }
 		public TimeSpan TimeForFreeRepair { get; set; }
 		public long MaxRepairCost { get; set; }
-		public long Cost { get; set; }
-		public VehicleCostUnit PurchaseCostUnit { get; set; }
-		public VehicleCostUnit MaxRepairCostUnit { get; set; }
-		public VehicleSpeedUnit MaxSpeedUnit { get; set; }
-		public VehicleEnginePowerUnit EnginePowerUnit { get; set; }
+		public long PurchaseCost { get; set; }
+		public VehicleCostUnitHelper PurchaseCostUnit { get; set; }
+		public VehicleCostUnitHelper MaxRepairCostUnit { get; set; }
+		public VehicleSpeedUnitHelper MaxSpeedUnit { get; set; }
+		public VehicleEnginePowerUnitHelper EnginePowerUnit { get; set; }
 	}
 }

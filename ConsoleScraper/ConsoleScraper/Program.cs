@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using System.IO;
 using System.Text;
 using System.Security.Cryptography;
+using ConsoleScraper.Enums;
 
 namespace ConsoleScraper
 {
@@ -41,10 +42,12 @@ namespace ConsoleScraper
 			{
 				overallStopwatch.Start();
 
-				VehicleCostUnit vehicleCostUnit = new VehicleCostUnit();
-				VehicleSpeedUnit vehicleSpeedUnit = new VehicleSpeedUnit();
-				VehicleWeightUnit vehicleWeightUnit = new VehicleWeightUnit();
-				VehicleEnginePowerUnit vehicleEnginePowerUnit = new VehicleEnginePowerUnit();
+				VehicleCostUnitHelper vehicleCostUnitHelper = new VehicleCostUnitHelper();
+				VehicleSpeedUnitHelper vehicleSpeedUnitHelper = new VehicleSpeedUnitHelper();
+				VehicleWeightUnitHelper vehicleWeightUnitHelper = new VehicleWeightUnitHelper();
+				VehicleCountryHelper vehicleCountryHelper = new VehicleCountryHelper();
+				GroundVehicleTypeHelper vehicleTypeHelper = new GroundVehicleTypeHelper();
+				VehicleEnginePowerUnitHelper vehicleEnginePowerUnitHelper = new VehicleEnginePowerUnitHelper();
 
 				HtmlWeb webGet = new HtmlWeb();
 
@@ -173,68 +176,88 @@ namespace ConsoleScraper
 
 							// Country
 							string countryRawValue = vehicleAttributes.Single(k => k.Key == "Country").Value.ToString();
+							CountryEnum vehicleCountry = vehicleCountryHelper.GetVehicleCountryFromName(countryRawValue).CountryEnum;
 
 							// Weight
 							string weightRawValue = vehicleAttributes.Single(k => k.Key == "Weight").Value.ToString();
 							int weightWithoutUnits = int.Parse(Regex.Match(weightRawValue, @"\d+").Value);
-							string weightUnitsAbbreviation = (Regex.Matches(weightRawValue, @"\D+").Cast<Match>()).Last().Value;
-							vehicleWeightUnit.GetWeightUnitFromAbbreviation(weightUnitsAbbreviation);
+							string weightUnitsAbbreviation = (Regex.Matches(weightRawValue, @"\D+").Cast<Match>()).Last().Value.Trim();
+							VehicleWeightUnitHelper vehicleWeightUnit = vehicleWeightUnitHelper.GetWeightUnitFromAbbreviation(weightUnitsAbbreviation);
 
 							// Vehicle class
 							string typeRawValue = vehicleAttributes.Single(k => k.Key == "Type").Value.ToString();
+							GroundVehicleTypeHelper vehicleType = vehicleTypeHelper.GetGroundVehicleTypeFromName(typeRawValue);
 
 							// Rank
 							int rankRawValue = int.Parse(vehicleAttributes.Single(k => k.Key == "Rank").Value.ToString());
+							int vehicleRank = rankRawValue;
 
 							// Battle rating
 							double ratingRawValue = double.Parse(vehicleAttributes.Single(k => k.Key == "Rating").Value.ToString());
+							double vehicleBattleRating = ratingRawValue;
 
 							// Engine power
 							string enginePowerRawValue = vehicleAttributes.Single(k => k.Key == "Engine power").Value.ToString();
 							int enginePowerWithoutUnits = int.Parse(Regex.Match(enginePowerRawValue, @"\d+").Value);
-							string enginePowerUnitsAbbreviation = (Regex.Matches(enginePowerRawValue, @"\D+").Cast<Match>()).Last().Value;
-							vehicleEnginePowerUnit.GetEngineUnitFromAbbreviation(enginePowerUnitsAbbreviation);
+							string enginePowerUnitsAbbreviation = (Regex.Matches(enginePowerRawValue, @"\D+").Cast<Match>()).Last().Value.Trim();
+							VehicleEnginePowerUnitHelper vehicleEngineUnit = vehicleEnginePowerUnitHelper.GetEngineUnitFromAbbreviation(enginePowerUnitsAbbreviation);
 
 							// Max speed
 							string maxSpeedRawValue = vehicleAttributes.Single(k => k.Key == "Max speed").Value.ToString();
 							double maxSpeedWithoutUnits = double.Parse(Regex.Match(maxSpeedRawValue, @"\d+\.*\d*").Value);
-							string maxSpeedUnits = (Regex.Matches(maxSpeedRawValue, @"\D+").Cast<Match>()).Last().Value;
-							vehicleSpeedUnit.GetSpeedUnitFromAbbreviation(maxSpeedUnits);
+							string maxSpeedUnits = (Regex.Matches(maxSpeedRawValue, @"\D+").Cast<Match>()).Last().Value.Trim();
+							VehicleSpeedUnitHelper vehicleSpeedUnit = vehicleSpeedUnitHelper.GetSpeedUnitFromAbbreviation(maxSpeedUnits);
 
 							// Hull armour
 							string hullArmourRawValue = vehicleAttributes.Single(k => k.Key == "Hull armour thickness").Value.ToString();
+							string vehicleHullArmourThickness = hullArmourRawValue;
 
 							// Superstructure armour
 							string superstructureArmourRawValue = vehicleAttributes.Single(k => k.Key == "Superstructure armour thickness").Value.ToString();
+							string vehicleSuperstructureArmourThickness = superstructureArmourRawValue;
 
 							// Repair time
 							string freeRepairTimeRawValue = vehicleAttributes.Single(k => k.Key == "Time for free repair").Value.ToString();
 							List<Match> freeRepairTimeList = (Regex.Matches(freeRepairTimeRawValue, @"\d+").Cast<Match>()).ToList();
 							int freeRepairTimeHours = int.Parse(freeRepairTimeList.First().Value);
 							int freeRepairTimeMinutes = int.Parse(freeRepairTimeList.Last().Value);
-							TimeSpan freeRepairTime = new TimeSpan(freeRepairTimeHours, freeRepairTimeMinutes, 0);
-
-							// Timespan.parse
+							TimeSpan vehicleFreeRepairTime = new TimeSpan(freeRepairTimeHours, freeRepairTimeMinutes, 0);
 
 							// Max repair cost
 							string maxRepairCostRawValue = vehicleAttributes.Single(k => k.Key == "Max repair cost*").Value.ToString();
 							string maxRepairCostWithoutUnits = Regex.Match(maxRepairCostRawValue, @"\d+").Value;
-							string maxRepairCostUnits = (Regex.Matches(maxRepairCostRawValue, @"\D+").Cast<Match>()).Last().Value;
-							vehicleCostUnit.GetCostUnitFromAbbreviation(maxRepairCostUnits);
+							string maxRepairCostUnits = (Regex.Matches(maxRepairCostRawValue, @"\D+").Cast<Match>()).Last().Value.Trim();
+							long vehicleMaxRepairCost = long.Parse(maxRepairCostWithoutUnits);
+							VehicleCostUnitHelper vehicleRepairCostUnit = vehicleCostUnitHelper.GetCostUnitFromAbbreviation(maxRepairCostUnits);
 
 							// Purchase cost
 							string purchaseCostRawValue = vehicleAttributes.Single(k => k.Key == "Cost*").Value.ToString();
 							string purchaseCostWithoutUnits = Regex.Match(purchaseCostRawValue, @"\d+").Value;
-							string purchaseCostUnits = (Regex.Matches(purchaseCostRawValue, @"\D+").Cast<Match>()).Last().Value;
-							vehicleCostUnit.GetCostUnitFromAbbreviation(purchaseCostUnits);
+							string purchaseCostUnits = (Regex.Matches(purchaseCostRawValue, @"\D+").Cast<Match>()).Last().Value.Trim();
+							long vehiclePurchaseCost = long.Parse(purchaseCostWithoutUnits);
+							VehicleCostUnitHelper vehiclePurchaseCostUnit = vehicleCostUnitHelper.GetCostUnitFromAbbreviation(purchaseCostUnits);
 
 							// Populate objects
 							GroundVehicle groundVehicle = new GroundVehicle
 							{
-								Title = vehicleName,
-								//Country = ,
-								//Weight = weightWithoutUnits
-
+								Name = vehicleName,
+								Country = vehicleCountry,
+								Weight = weightWithoutUnits,
+								VehicleType = vehicleType,
+								Rank = vehicleRank,
+								BattleRating = vehicleBattleRating,
+								EnginePower = enginePowerWithoutUnits,
+								MaxSpeed = maxSpeedWithoutUnits,
+								HullArmourThickness = vehicleHullArmourThickness,
+								SuperStructureArmourThickness = vehicleSuperstructureArmourThickness,
+								TimeForFreeRepair = vehicleFreeRepairTime,
+								MaxRepairCost = vehicleMaxRepairCost,
+								PurchaseCost = vehiclePurchaseCost,
+								PurchaseCostUnit = vehiclePurchaseCostUnit,
+								MaxRepairCostUnit = vehicleRepairCostUnit,
+								MaxSpeedUnit = vehicleSpeedUnit,
+								WeightUnit = vehicleWeightUnit,
+								EnginePowerUnit = vehicleEngineUnit
 							};
 
 							//WikiEntry entry = new WikiEntry(vehicleName, vehicleWikiEntryFullUrl, VehicleTypeEnum.Ground, vehicleInfo);

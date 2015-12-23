@@ -56,16 +56,17 @@
     <Compile Include="Enums\CountryEnum.cs" />
     <Compile Include="Models\GroundVehicle.cs" />
     <Compile Include="Enums\GroundVehicleTypeEnum.cs" />
+    <Compile Include="Models\GroundVehicleTypeHelper.cs" />
     <Compile Include="Models\IVehicle.cs" />
     <Compile Include="Models\IVehicleStatisticalUnit.cs" />
-    <Compile Include="Models\VehicleCostUnit.cs" />
-    <Compile Include="Models\VehicleCountry.cs" />
-    <Compile Include="Models\VehicleEnginePowerUnit.cs" />
-    <Compile Include="Models\VehicleSpeedUnit.cs" />
+    <Compile Include="Models\VehicleCostUnitHelper.cs" />
+    <Compile Include="Models\VehicleCountryHelper.cs" />
+    <Compile Include="Models\VehicleEnginePowerUnitHelper.cs" />
+    <Compile Include="Models\VehicleSpeedUnitHelper.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Enums\VehicleTypeEnum.cs" />
-    <Compile Include="Models\VehicleWeightUnit.cs" />
+    <Compile Include="Models\VehicleWeightUnitHelper.cs" />
     <Compile Include="Enums\VehicleWeightUnitEnum.cs" />
     <Compile Include="Models\WikiEntry.cs" />
   </ItemGroup>

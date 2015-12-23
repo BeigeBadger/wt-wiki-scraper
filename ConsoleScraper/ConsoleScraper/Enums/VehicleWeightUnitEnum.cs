@@ -2,6 +2,7 @@
 {
 	public enum VehicleWeightUnitEnum
 	{
+		Undefined = 0,
 		Kilograms = 1,
 	}
 }

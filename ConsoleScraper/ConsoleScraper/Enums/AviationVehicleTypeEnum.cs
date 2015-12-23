@@ -2,6 +2,7 @@
 {
 	public enum AviationVehicleTypeEnum
 	{
+		Undefined = 0,
 		Fighters = 1,
 		Attackers = 2,
 		Bombers = 3,
