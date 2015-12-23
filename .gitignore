@@ -239,3 +239,6 @@ ConsoleScraper/ConsoleScraper/bin/Debug/ConsoleScraper.exe
 *.pdb
 ConsoleScraper/ConsoleScraper/obj/Debug/ConsoleScraper.exe
 *.pdb
+ConsoleScraper/ConsoleScraper/obj/Debug/ConsoleScraper.pdb
+ConsoleScraper/.vs/ConsoleScraper/v14/.suo
+ConsoleScraper/ConsoleScraper/obj/Debug/ConsoleScraper.exe
