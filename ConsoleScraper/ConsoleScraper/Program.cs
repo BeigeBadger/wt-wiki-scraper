@@ -7,6 +7,9 @@ using ConsoleScraper.Models;
 using System.Diagnostics;
 using System.Collections.Concurrent;
 using System.Threading.Tasks;
+using System.IO;
+using System.Text;
+using System.Security.Cryptography;
 
 namespace ConsoleScraper
 {
@@ -21,6 +24,7 @@ namespace ConsoleScraper
 	{
 		public static string BaseWikiUrl = "http://wiki.warthunder.com/";
 		public static string GroundForcesWikiUrl = $"{BaseWikiUrl}index.php?title=Category:Ground_vehicles";
+		public static string LastModifiedSectionId = "footer-info-lastmod";
 
 		#region Debugging helpers
 
@@ -80,6 +84,7 @@ namespace ConsoleScraper
 					// Setup thread-safe collections for processing
 					ConcurrentDictionary<int, HtmlNode> linksToVehicleWikiPages = new ConcurrentDictionary<int, HtmlNode>();
 					ConcurrentDictionary<string, HtmlDocument> vehicleWikiPagesContent = new ConcurrentDictionary<string, HtmlDocument>();
+					ConcurrentDictionary<string, string> localFileChanges = new ConcurrentDictionary<string, string>();
 
 					for (int i = 0; i < vehicleWikiEntryLinks.Count(); i++)
 					{
@@ -93,10 +98,10 @@ namespace ConsoleScraper
 					Task[] webCrawlerTasks = new Task[4]
 					{
 						// Going from 2 to 4 tasks halves the processing time, after 4 tasks the performance gain is negligible
-						Task.Factory.StartNew(() => GetPageHtml(linksToVehicleWikiPages, vehicleWikiPagesContent)),
-						Task.Factory.StartNew(() => GetPageHtml(linksToVehicleWikiPages, vehicleWikiPagesContent)),
-						Task.Factory.StartNew(() => GetPageHtml(linksToVehicleWikiPages, vehicleWikiPagesContent)),
-						Task.Factory.StartNew(() => GetPageHtml(linksToVehicleWikiPages, vehicleWikiPagesContent))
+						Task.Factory.StartNew(() => GetPageHtml(linksToVehicleWikiPages, vehicleWikiPagesContent, localFileChanges)),
+						Task.Factory.StartNew(() => GetPageHtml(linksToVehicleWikiPages, vehicleWikiPagesContent, localFileChanges)),
+						Task.Factory.StartNew(() => GetPageHtml(linksToVehicleWikiPages, vehicleWikiPagesContent, localFileChanges)),
+						Task.Factory.StartNew(() => GetPageHtml(linksToVehicleWikiPages, vehicleWikiPagesContent, localFileChanges))
 					};
 
 					// Wait until we have crawled all of the pages
@@ -104,7 +109,6 @@ namespace ConsoleScraper
 
 					webCrawlerStopwatch.Stop();
 					processingStopwatch.Start();
-
 
 					int indexPosition = 1;
 					Dictionary<string, GroundVehicle> vehicleDetails = new Dictionary<string, GroundVehicle>();
@@ -271,6 +275,17 @@ namespace ConsoleScraper
 					Console.WriteLine($"Completed in {timeSpan.Hours:00}:{timeSpan.Minutes:00}:{timeSpan.Seconds:00}");
 					Console.WriteLine($"Expected total: {totalNumberOfLinksBasedOnPageText}, Actual total: {totalNumberOfLinksBasedOnDomTraversal}");
 					Console.WriteLine($"Vehicle objects created: {vehicleDetails.Count()} (Actual - Errors)");
+
+					if(localFileChanges.Any())
+					{
+						Console.WriteLine();
+						Console.WriteLine("The following changes were made to the local wiki files: ");
+
+						foreach(string change in localFileChanges.Values)
+						{
+							Console.WriteLine(change);
+						}
+					}
 				}
 
 				// Wait until the user hits 'Esc' to terminate the application
@@ -293,7 +308,7 @@ namespace ConsoleScraper
 			}
 		}
 
-		public static void GetPageHtml(ConcurrentDictionary<int, HtmlNode> vehiclePageLinks, ConcurrentDictionary<string, HtmlDocument> vehicleWikiPageDocuments)
+		public static void GetPageHtml(ConcurrentDictionary<int, HtmlNode> vehiclePageLinks, ConcurrentDictionary<string, HtmlDocument> vehicleWikiPageDocuments, ConcurrentDictionary<string, string> localFileChanges)
 		{
 			foreach (var vehiclePageLink in vehiclePageLinks)
 			{
@@ -319,6 +334,63 @@ namespace ConsoleScraper
 				vehicleWikiPageDocuments.TryAdd(vehicleName, vehicleWikiPage);
 
 				Console.WriteLine(vehicleWikiPageDocuments.Count());
+
+				// Update the local repo
+				UpdateLocalStorageForOfflineUse(localFileChanges, vehicleWikiPage, vehicleName);
+			}
+		}
+
+		private static void UpdateLocalStorageForOfflineUse(ConcurrentDictionary<string, string> localFileChanges, HtmlDocument vehicleWikiPage, string vehicleName)
+		{
+			// Make path to save the local copy of the wiki in so we can run it offline if needs be
+			string fileName = vehicleName.Replace(' ', '_').Replace('/', '-');
+			string folderPath = @"..\..\LocalWiki\HTML\";
+			string filePath = $@"{folderPath}{fileName}.html";
+
+			if (!File.Exists(filePath))
+			{
+				vehicleWikiPage.Save($"{filePath}", Encoding.UTF8);
+
+				// Record addition of new item
+				localFileChanges.TryAdd(vehicleName, $"New vehicle '{fileName}' added to local wiki");
+				Console.WriteLine($"New vehicle '{fileName}' added to local wiki");
+			}
+			else
+			{
+				string existingFileText = File.ReadAllText(filePath);
+
+				//Create a fake document so we can use helper methods to traverse through the existing file as an HTML document
+				HtmlDocument htmlDoc = new HtmlDocument();
+				HtmlNode existingHtml = HtmlNode.CreateNode(existingFileText);
+				htmlDoc.DocumentNode.AppendChild(existingHtml);
+
+				var newLastModSection = vehicleWikiPage.DocumentNode.Descendants().SingleOrDefault(x => x.Id == LastModifiedSectionId);
+				var oldLastModSection = existingHtml.OwnerDocument.DocumentNode.Descendants().SingleOrDefault(x => x.Id == LastModifiedSectionId);
+
+				if (newLastModSection != null && oldLastModSection != null)
+				{
+					if (newLastModSection.InnerText != oldLastModSection.InnerText)
+					{
+						vehicleWikiPage.Save($"{filePath}", Encoding.UTF8);
+
+						// Record update of existing item
+						localFileChanges.TryAdd(vehicleName, $"Vehicle '{fileName}' updated in local wiki");
+						Console.WriteLine($"Vehicle '{fileName}' updated in local wiki");
+					}
+				}
+				else if (oldLastModSection == null)
+				{
+					// Add new item
+					vehicleWikiPage.Save($"{filePath}", Encoding.UTF8);
+
+					// Record addition of new item
+					localFileChanges.TryAdd(vehicleName, $"New vehicle '{fileName}' added to local wiki");
+					Console.WriteLine($"New vehicle '{fileName}' added to local wiki");
+				}
+				else
+				{
+					throw new InvalidOperationException($"Unable to find the '{LastModifiedSectionId}' section, information comparision failed. Most likely the ID of the last modified section has changed.");
+				}
 			}
 		}
 	}
