@@ -9,19 +9,21 @@
 *.userprefs
 
 # Build results
-[Dd]ebug/
-[Dd]ebugPublic/
-[Rr]elease/
-[Rr]eleases/
+[Dd]ebug/*
+[Dd]ebugPublic/*
+[Rr]elease/*
+[Rr]eleases/*
 x64/
 x86/
-build/
+build/*
 bld/
 [Bb]in/
 [Oo]bj/
-/build/
-Debug/
-Release/
+/build/*
+Debug/*
+Release/*
+/bin/*
+
 
 # Visual Studio 2015 cache/options directory
 .vs/
@@ -232,22 +234,3 @@ _Pvt_Extensions
 # FAKE - F# Make
 .fake/
 *.suo
-ConsoleScraper/ConsoleScraper/obj/Debug/ConsoleScraper.pdb
-ConsoleScraper/ConsoleScraper/obj/Debug/ConsoleScraper.csprojResolveAssemblyReference.cache
-*.cache
-ConsoleScraper/ConsoleScraper/obj/Debug/ConsoleScraper.csproj.FileListAbsolute.txt
-*.pdb
-ConsoleScraper/.vs/ConsoleScraper/v14/.suo
-*.cache
-ConsoleScraper/ConsoleScraper/obj/Debug/ConsoleScraper.csproj.FileListAbsolute.txt
-*.suo
-ConsoleScraper/ConsoleScraper/bin/Debug/ConsoleScraper.exe
-*.cache
-ConsoleScraper/ConsoleScraper/bin/Debug/ConsoleScraper.pdb
-*.suo
-ConsoleScraper/ConsoleScraper/obj/Debug/ConsoleScraper.exe
-*.pdb
-ConsoleScraper/ConsoleScraper/bin/Debug/ConsoleScraper.exe
-ConsoleScraper/ConsoleScraper/obj/Debug/ConsoleScraper.exe
-ConsoleScraper/ConsoleScraper/bin/Debug/ConsoleScraper.exe
-ConsoleScraper/ConsoleScraper/obj/Debug/ConsoleScraper.exe
