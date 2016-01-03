@@ -116,162 +116,9 @@ namespace ConsoleScraper
 					int indexPosition = 1;
 					Dictionary<string, GroundVehicle> vehicleDetails = new Dictionary<string, GroundVehicle>();
 
-					foreach (HtmlDocument vehicleWikiPage in vehicleWikiPagesContent.Values)
-					{
-						// Get the header that holds the page title | document.getElementsByClassName('firstHeading')[0].firstChild.innerText
-						HtmlNode pageTitle = vehicleWikiPage.DocumentNode.Descendants().Single(d => d.Id == "firstHeading").FirstChild;
-						// Get the div that holds all of the content under the title section | document.getElementById('bodyContent')
-						HtmlNode wikiBody = vehicleWikiPage.DocumentNode.Descendants().Single(d => d.Id == "bodyContent");
-						// Get the div that holds the content on the RHS of the page where the information table is | document.getElementById('bodyContent').getElementsByClassName('right-area')
-						HtmlNode rightHandContent = wikiBody.Descendants("div").Single(d => d.Attributes["class"] != null && d.Attributes["class"].Value.Contains("right-area"));
-						// Get the able that holds all of the vehicle information | document.getElementsByClassName('flight-parameters')[0]
-						HtmlNode infoBox = rightHandContent.Descendants("table").SingleOrDefault(d => d.Attributes["class"].Value.Contains("flight-parameters"));
-
-						// Name
-						string vehicleName = pageTitle.InnerText;
-
-						if (infoBox == null)
-						{
-							Console.ForegroundColor = ConsoleColor.Red;
-							Console.WriteLine($"Error processing item {indexPosition} of {totalNumberOfLinksBasedOnDomTraversal}");
-							Console.ResetColor();
-
-							errorList.Add($"No Information found for '{vehicleName}', proceeding to next vehicle");
-							indexPosition++;
-							continue;
-						}
-						else
-						{
-							Dictionary<string, string> vehicleAttributes = new Dictionary<string, string>();
-							HtmlNodeCollection rows = infoBox.SelectNodes("tr");
-
-							Console.WriteLine($"The following values were found for {vehicleName}");
-
-							foreach (HtmlNode row in rows)
-							{
-								HtmlNodeCollection cells = row.SelectNodes("td");
-
-								string rowTitle = cells.First().SelectNodes("b").Single().InnerText.Trim();
-								string rowValue = cells.Last().InnerText.Trim();
-
-								vehicleAttributes.Add(rowTitle, rowValue);
-
-								Console.ForegroundColor = ConsoleColor.DarkGreen;
-								Console.WriteLine($"{rowTitle}: {rowValue}");
-
-								if (propertyTotals.ContainsKey(rowTitle))
-								{
-									int currentCount;
-									propertyTotals.TryGetValue(rowTitle, out currentCount);
-
-									propertyTotals[rowTitle] = currentCount + 1;
-								}
-								else
-								{
-									propertyTotals.Add(rowTitle, 1);
-								}
-							}
-
-							Console.ResetColor();
-
-							// Country
-							string countryRawValue = vehicleAttributes.Single(k => k.Key == "Country").Value.ToString();
-							CountryEnum vehicleCountry = vehicleCountryHelper.GetVehicleCountryFromName(countryRawValue).CountryEnum;
-
-							// Weight
-							string weightRawValue = vehicleAttributes.Single(k => k.Key == "Weight").Value.ToString();
-							int weightWithoutUnits = int.Parse(Regex.Match(weightRawValue, @"\d+").Value);
-							string weightUnitsAbbreviation = (Regex.Matches(weightRawValue, @"\D+").Cast<Match>()).Last().Value.Trim();
-							VehicleWeightUnitHelper vehicleWeightUnit = vehicleWeightUnitHelper.GetWeightUnitFromAbbreviation(weightUnitsAbbreviation);
-
-							// Vehicle class
-							string typeRawValue = vehicleAttributes.Single(k => k.Key == "Type").Value.ToString();
-							GroundVehicleTypeHelper vehicleType = vehicleTypeHelper.GetGroundVehicleTypeFromName(typeRawValue);
-
-							// Rank
-							int rankRawValue = int.Parse(vehicleAttributes.Single(k => k.Key == "Rank").Value.ToString());
-							int vehicleRank = rankRawValue;
-
-							// Battle rating
-							double ratingRawValue = double.Parse(vehicleAttributes.Single(k => k.Key == "Rating").Value.ToString());
-							double vehicleBattleRating = ratingRawValue;
-
-							// Engine power
-							string enginePowerRawValue = vehicleAttributes.Single(k => k.Key == "Engine power").Value.ToString();
-							int enginePowerWithoutUnits = int.Parse(Regex.Match(enginePowerRawValue, @"\d+").Value);
-							string enginePowerUnitsAbbreviation = (Regex.Matches(enginePowerRawValue, @"\D+").Cast<Match>()).Last().Value.Trim();
-							VehicleEnginePowerUnitHelper vehicleEngineUnit = vehicleEnginePowerUnitHelper.GetEngineUnitFromAbbreviation(enginePowerUnitsAbbreviation);
-
-							// Max speed
-							string maxSpeedRawValue = vehicleAttributes.Single(k => k.Key == "Max speed").Value.ToString();
-							double maxSpeedWithoutUnits = double.Parse(Regex.Match(maxSpeedRawValue, @"\d+\.*\d*").Value);
-							string maxSpeedUnits = (Regex.Matches(maxSpeedRawValue, @"\D+").Cast<Match>()).Last().Value.Trim();
-							VehicleSpeedUnitHelper vehicleSpeedUnit = vehicleSpeedUnitHelper.GetSpeedUnitFromAbbreviation(maxSpeedUnits);
-
-							// Hull armour
-							string hullArmourRawValue = vehicleAttributes.Single(k => k.Key == "Hull armour thickness").Value.ToString();
-							string vehicleHullArmourThickness = hullArmourRawValue;
-
-							// Superstructure armour
-							string superstructureArmourRawValue = vehicleAttributes.Single(k => k.Key == "Superstructure armour thickness").Value.ToString();
-							string vehicleSuperstructureArmourThickness = superstructureArmourRawValue;
-
-							// Repair time
-							string freeRepairTimeRawValue = vehicleAttributes.Single(k => k.Key == "Time for free repair").Value.ToString();
-							List<Match> freeRepairTimeList = (Regex.Matches(freeRepairTimeRawValue, @"\d+").Cast<Match>()).ToList();
-							int freeRepairTimeHours = int.Parse(freeRepairTimeList.First().Value);
-							int freeRepairTimeMinutes = int.Parse(freeRepairTimeList.Last().Value);
-							TimeSpan vehicleFreeRepairTime = new TimeSpan(freeRepairTimeHours, freeRepairTimeMinutes, 0);
-
-							// Max repair cost
-							string maxRepairCostRawValue = vehicleAttributes.Single(k => k.Key == "Max repair cost*").Value.ToString();
-							string maxRepairCostWithoutUnits = Regex.Match(maxRepairCostRawValue, @"\d+").Value;
-							string maxRepairCostUnits = (Regex.Matches(maxRepairCostRawValue, @"\D+").Cast<Match>()).Last().Value.Trim();
-							long vehicleMaxRepairCost = long.Parse(maxRepairCostWithoutUnits);
-							VehicleCostUnitHelper vehicleRepairCostUnit = vehicleCostUnitHelper.GetCostUnitFromAbbreviation(maxRepairCostUnits);
-
-							// Purchase cost
-							string purchaseCostRawValue = vehicleAttributes.Single(k => k.Key == "Cost*").Value.ToString();
-							string purchaseCostWithoutUnits = Regex.Match(purchaseCostRawValue, @"\d+").Value;
-							string purchaseCostUnits = (Regex.Matches(purchaseCostRawValue, @"\D+").Cast<Match>()).Last().Value.Trim();
-							long vehiclePurchaseCost = long.Parse(purchaseCostWithoutUnits);
-							VehicleCostUnitHelper vehiclePurchaseCostUnit = vehicleCostUnitHelper.GetCostUnitFromAbbreviation(purchaseCostUnits);
-
-							// Populate objects
-							GroundVehicle groundVehicle = new GroundVehicle
-							{
-								Name = vehicleName,
-								Country = vehicleCountry,
-								Weight = weightWithoutUnits,
-								VehicleType = vehicleType,
-								Rank = vehicleRank,
-								BattleRating = vehicleBattleRating,
-								EnginePower = enginePowerWithoutUnits,
-								MaxSpeed = maxSpeedWithoutUnits,
-								HullArmourThickness = vehicleHullArmourThickness,
-								SuperStructureArmourThickness = vehicleSuperstructureArmourThickness,
-								TimeForFreeRepair = vehicleFreeRepairTime,
-								MaxRepairCost = vehicleMaxRepairCost,
-								PurchaseCost = vehiclePurchaseCost,
-								PurchaseCostUnit = vehiclePurchaseCostUnit,
-								MaxRepairCostUnit = vehicleRepairCostUnit,
-								MaxSpeedUnit = vehicleSpeedUnit,
-								WeightUnit = vehicleWeightUnit,
-								EnginePowerUnit = vehicleEngineUnit
-							};
-
-							//WikiEntry entry = new WikiEntry(vehicleName, vehicleWikiEntryFullUrl, VehicleTypeEnum.Ground, vehicleInfo);
-
-							vehicleDetails.Add(vehicleName, groundVehicle);
-
-							Console.ForegroundColor = ConsoleColor.Green;
-							Console.WriteLine($"Processed item {indexPosition} of {totalNumberOfLinksBasedOnDomTraversal} successfully");
-							Console.WriteLine();
-							Console.ResetColor();
-						}
-
-						indexPosition++;
-					}
+					ProcessWikiHtmlFiles(vehicleDetails, vehicleWikiPagesContent.Values, errorList, vehicleTypeHelper, vehicleWeightUnitHelper,
+						vehicleSpeedUnitHelper, vehicleEnginePowerUnitHelper, vehicleCountryHelper, vehicleCostUnitHelper, indexPosition,
+						totalNumberOfLinksBasedOnDomTraversal);
 
 					processingStopwatch.Stop();
 
@@ -360,6 +207,182 @@ namespace ConsoleScraper
 
 				// Update the local repo
 				UpdateLocalStorageForOfflineUse(localFileChanges, vehicleWikiPage, vehicleName);
+			}
+		}
+
+		private static void ProcessWikiHtmlFiles(Dictionary<string, GroundVehicle> vehicleDetails, ICollection<HtmlDocument> vehicleWikiPages, List<string> errorList, GroundVehicleTypeHelper vehicleTypeHelper, VehicleWeightUnitHelper vehicleWeightUnitHelper ,VehicleSpeedUnitHelper vehicleSpeedUnitHelper, VehicleEnginePowerUnitHelper vehicleEnginePowerUnitHelper, VehicleCountryHelper vehicleCountryHelper, VehicleCostUnitHelper vehicleCostUnitHelper, int indexPosition, int expectedNumberOfLinks)
+		{
+			foreach (HtmlDocument vehicleWikiPage in vehicleWikiPages)
+			{
+				// Get the header that holds the page title | document.getElementsByClassName('firstHeading')[0].firstChild.innerText
+				HtmlNode pageTitle = vehicleWikiPage.DocumentNode.Descendants().Single(d => d.Id == "firstHeading").FirstChild;
+				// Get the div that holds all of the content under the title section | document.getElementById('bodyContent')
+				HtmlNode wikiBody = vehicleWikiPage.DocumentNode.Descendants().Single(d => d.Id == "bodyContent");
+				// Get the div that holds the content on the RHS of the page where the information table is | document.getElementById('bodyContent').getElementsByClassName('right-area')
+				HtmlNode rightHandContent = wikiBody.Descendants("div").Single(d => d.Attributes["class"] != null && d.Attributes["class"].Value.Contains("right-area"));
+				// Get the able that holds all of the vehicle information | document.getElementsByClassName('flight-parameters')[0]
+				HtmlNode infoBox = rightHandContent.Descendants("table").SingleOrDefault(d => d.Attributes["class"].Value.Contains("flight-parameters"));
+
+				// Name
+				string vehicleName = pageTitle.InnerText;
+
+				if (infoBox == null)
+				{
+					Console.ForegroundColor = ConsoleColor.Red;
+					Console.WriteLine($"Error processing item {indexPosition} of {expectedNumberOfLinks}");
+					Console.ResetColor();
+
+					errorList.Add($"No Information found for '{vehicleName}', proceeding to next vehicle");
+					indexPosition++;
+					continue;
+				}
+				else
+				{
+					Dictionary<string, string> vehicleAttributes = new Dictionary<string, string>();
+					HtmlNodeCollection rows = infoBox.SelectNodes("tr");
+
+					Console.WriteLine($"The following values were found for {vehicleName}");
+
+					foreach (HtmlNode row in rows)
+					{
+						HtmlNodeCollection cells = row.SelectNodes("td");
+
+						string rowTitle = cells.First().SelectNodes("b").Single().InnerText.Trim();
+						string rowValue = cells.Last().InnerText.Trim();
+
+						vehicleAttributes.Add(rowTitle, rowValue);
+
+						Console.ForegroundColor = ConsoleColor.DarkGreen;
+						Console.WriteLine($"{rowTitle}: {rowValue}");
+
+						if (propertyTotals.ContainsKey(rowTitle))
+						{
+							int currentCount;
+							propertyTotals.TryGetValue(rowTitle, out currentCount);
+
+							propertyTotals[rowTitle] = currentCount + 1;
+						}
+						else
+						{
+							propertyTotals.Add(rowTitle, 1);
+						}
+					}
+
+					Console.ResetColor();
+
+					// Country
+					string countryRawValue = vehicleAttributes.Single(k => k.Key == "Country").Value.ToString();
+					CountryEnum vehicleCountry = vehicleCountryHelper.GetVehicleCountryFromName(countryRawValue).CountryEnum;
+
+					// Weight
+					string weightRawValue = vehicleAttributes.Single(k => k.Key == "Weight").Value.ToString();
+					int weightWithoutUnits = int.Parse(Regex.Match(weightRawValue, @"\d+").Value);
+					string weightUnitsAbbreviation = (Regex.Matches(weightRawValue, @"\D+").Cast<Match>()).Last().Value.Trim();
+					VehicleWeightUnitHelper vehicleWeightUnit = vehicleWeightUnitHelper.GetWeightUnitFromAbbreviation(weightUnitsAbbreviation);
+
+					// Vehicle class
+					string typeRawValue = vehicleAttributes.Single(k => k.Key == "Type").Value.ToString();
+					GroundVehicleTypeHelper vehicleType = vehicleTypeHelper.GetGroundVehicleTypeFromName(typeRawValue);
+
+					// Rank
+					int rankRawValue = int.Parse(vehicleAttributes.Single(k => k.Key == "Rank").Value.ToString());
+					int vehicleRank = rankRawValue;
+
+					// Battle rating
+					double ratingRawValue = double.Parse(vehicleAttributes.Single(k => k.Key == "Rating").Value.ToString());
+					double vehicleBattleRating = ratingRawValue;
+
+					// Engine power
+					string enginePowerRawValue = vehicleAttributes.Single(k => k.Key == "Engine power").Value.ToString();
+					int enginePowerWithoutUnits = int.Parse(Regex.Match(enginePowerRawValue, @"\d+").Value);
+					string enginePowerUnitsAbbreviation = (Regex.Matches(enginePowerRawValue, @"\D+").Cast<Match>()).Last().Value.Trim();
+					VehicleEnginePowerUnitHelper vehicleEngineUnit = vehicleEnginePowerUnitHelper.GetEngineUnitFromAbbreviation(enginePowerUnitsAbbreviation);
+
+					// Max speed
+					string maxSpeedRawValue = vehicleAttributes.Single(k => k.Key == "Max speed").Value.ToString();
+					double maxSpeedWithoutUnits = double.Parse(Regex.Match(maxSpeedRawValue, @"\d+\.*\d*").Value);
+					string maxSpeedUnits = (Regex.Matches(maxSpeedRawValue, @"\D+").Cast<Match>()).Last().Value.Trim();
+					VehicleSpeedUnitHelper vehicleSpeedUnit = vehicleSpeedUnitHelper.GetSpeedUnitFromAbbreviation(maxSpeedUnits);
+
+					// Hull armour
+					string hullArmourRawValue = vehicleAttributes.Single(k => k.Key == "Hull armour thickness").Value.ToString();
+					string vehicleHullArmourThickness = hullArmourRawValue;
+
+					// Superstructure armour
+					string superstructureArmourRawValue = vehicleAttributes.Single(k => k.Key == "Superstructure armour thickness").Value.ToString();
+					string vehicleSuperstructureArmourThickness = superstructureArmourRawValue;
+
+					// Repair time
+					string freeRepairTimeRawValue = vehicleAttributes.Single(k => k.Key == "Time for free repair").Value.ToString();
+					List<Match> freeRepairTimeList = (Regex.Matches(freeRepairTimeRawValue, @"\d+").Cast<Match>()).ToList();
+					int freeRepairTimeHours = int.Parse(freeRepairTimeList.First().Value);
+					int freeRepairTimeMinutes = int.Parse(freeRepairTimeList.Last().Value);
+					TimeSpan vehicleFreeRepairTime = new TimeSpan(freeRepairTimeHours, freeRepairTimeMinutes, 0);
+
+					// Max repair cost
+					string maxRepairCostRawValue = vehicleAttributes.Single(k => k.Key == "Max repair cost*").Value.ToString();
+					string maxRepairCostWithoutUnits = Regex.Match(maxRepairCostRawValue, @"\d+").Value;
+					string maxRepairCostUnits = (Regex.Matches(maxRepairCostRawValue, @"\D+").Cast<Match>()).Last().Value.Trim();
+					long vehicleMaxRepairCost = long.Parse(maxRepairCostWithoutUnits);
+					VehicleCostUnitHelper vehicleRepairCostUnit = vehicleCostUnitHelper.GetCostUnitFromAbbreviation(maxRepairCostUnits);
+
+					// Purchase cost
+					string purchaseCostRawValue = vehicleAttributes.Single(k => k.Key == "Cost*").Value.ToString();
+					string purchaseCostWithoutUnits = Regex.Match(purchaseCostRawValue, @"\d+").Value;
+					string purchaseCostUnits = (Regex.Matches(purchaseCostRawValue, @"\D+").Cast<Match>()).Last().Value.Trim();
+					long vehiclePurchaseCost = long.Parse(purchaseCostWithoutUnits);
+					VehicleCostUnitHelper vehiclePurchaseCostUnit = vehicleCostUnitHelper.GetCostUnitFromAbbreviation(purchaseCostUnits);
+
+					// Populate objects
+					GroundVehicle groundVehicle = new GroundVehicle
+					{
+						Name = vehicleName,
+						Country = vehicleCountry,
+						Weight = weightWithoutUnits,
+						VehicleType = vehicleType,
+						Rank = vehicleRank,
+						BattleRating = vehicleBattleRating,
+						EnginePower = enginePowerWithoutUnits,
+						MaxSpeed = maxSpeedWithoutUnits,
+						HullArmourThickness = vehicleHullArmourThickness,
+						SuperStructureArmourThickness = vehicleSuperstructureArmourThickness,
+						TimeForFreeRepair = vehicleFreeRepairTime,
+						MaxRepairCost = vehicleMaxRepairCost,
+						PurchaseCost = vehiclePurchaseCost,
+						PurchaseCostUnit = vehiclePurchaseCostUnit,
+						MaxRepairCostUnit = vehicleRepairCostUnit,
+						MaxSpeedUnit = vehicleSpeedUnit,
+						WeightUnit = vehicleWeightUnit,
+						EnginePowerUnit = vehicleEngineUnit
+					};
+
+					string vehicleJson = Newtonsoft.Json.JsonConvert.SerializeObject(groundVehicle, Newtonsoft.Json.Formatting.Indented);
+
+					// Add Json to local directory
+					string fileName = vehicleName.Replace(' ', '_').Replace('/', '-');
+					string folderPath = @"..\..\LocalWiki\JSON\";
+					string filePath = $@"{folderPath}{fileName}.json";
+
+					if (!File.Exists(filePath))
+					{
+						File.WriteAllText(filePath, vehicleJson);
+
+						// Record addition of new item
+						//localFileChanges.TryAdd(vehicleName, $"New vehicle '{fileName}' added to local wiki");
+						Console.WriteLine($"New vehicle '{fileName}'  JSON added to local wiki");
+					}
+
+					//WikiEntry entry = new WikiEntry(vehicleName, vehicleWikiEntryFullUrl, VehicleTypeEnum.Ground, vehicleInfo);
+
+					vehicleDetails.Add(vehicleName, groundVehicle);
+
+					Console.ForegroundColor = ConsoleColor.Green;
+					Console.WriteLine($"Processed item {indexPosition} of {expectedNumberOfLinks} successfully");
+					Console.WriteLine();
+					Console.ResetColor();
+				}
+
+				indexPosition++;
 			}
 		}
 
