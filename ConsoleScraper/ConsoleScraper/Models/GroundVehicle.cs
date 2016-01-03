@@ -42,6 +42,7 @@ namespace ConsoleScraper.Models
 		public TimeSpan TimeForFreeRepair { get; set; }
 		public long MaxRepairCost { get; set; }
 		public long PurchaseCost { get; set; }
+		public string LastModified { get; set; }
 		public VehicleCostUnitHelper PurchaseCostUnit { get; set; }
 		public VehicleCostUnitHelper MaxRepairCostUnit { get; set; }
 		public VehicleSpeedUnitHelper MaxSpeedUnit { get; set; }

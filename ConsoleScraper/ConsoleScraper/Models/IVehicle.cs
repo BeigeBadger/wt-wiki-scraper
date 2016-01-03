@@ -10,6 +10,7 @@ namespace ConsoleScraper.Models
 		double MaxSpeed { get; set; }
 		double BattleRating { get; set; }
 		long PurchaseCost { get; set; }
+		string LastModified { get; set; }
 		VehicleCostUnitHelper PurchaseCostUnit { get; set; }
 		VehicleCostUnitHelper MaxRepairCostUnit { get; set; }
 		VehicleSpeedUnitHelper MaxSpeedUnit { get; set; }

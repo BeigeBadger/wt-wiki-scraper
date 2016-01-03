@@ -350,6 +350,10 @@ namespace ConsoleScraper
 					long vehiclePurchaseCost = long.Parse(purchaseCostWithoutUnits);
 					VehicleCostUnitHelper vehiclePurchaseCostUnit = vehicleCostUnitHelper.GetCostUnitFromAbbreviation(purchaseCostUnits);
 
+					// Last modified
+					HtmlNode lastModifiedSection = vehicleWikiPage.DocumentNode.Descendants().SingleOrDefault(x => x.Id == LastModifiedSectionId);
+					string lastModified = lastModifiedSection?.InnerHtml;
+
 					// Populate objects
 					GroundVehicle groundVehicle = new GroundVehicle
 					{
@@ -370,7 +374,8 @@ namespace ConsoleScraper
 						MaxRepairCostUnit = vehicleRepairCostUnit,
 						MaxSpeedUnit = vehicleSpeedUnit,
 						WeightUnit = vehicleWeightUnit,
-						EnginePowerUnit = vehicleEngineUnit
+						EnginePowerUnit = vehicleEngineUnit,
+						LastModified = lastModified
 					};
 
 					string vehicleJson = Newtonsoft.Json.JsonConvert.SerializeObject(groundVehicle, Newtonsoft.Json.Formatting.Indented);
@@ -385,8 +390,25 @@ namespace ConsoleScraper
 						File.WriteAllText(filePath, vehicleJson);
 
 						// Record addition of new item
-						//localFileChanges.TryAdd(vehicleName, $"New vehicle '{fileName}' added to local wiki");
+						//localFileChanges.TryAdd(vehicleName, $"New vehicle '{fileName}' added to local wiki"); // Cannot currently happen due to scope of variable - needs refactor to occur when we create the HTML file
 						Console.WriteLine($"New vehicle '{fileName}'  JSON added to local wiki");
+					}
+					else
+					{
+						string existingFileText = File.ReadAllText(filePath);
+
+						string newLastModSection = groundVehicle.LastModified;
+						GroundVehicle existingVehicle = Newtonsoft.Json.JsonConvert.DeserializeObject<GroundVehicle>(existingFileText);
+						string oldLastModSection = existingVehicle?.LastModified;
+
+						if (!AreLastModifiedTimesTheSame(oldLastModSection, newLastModSection))
+						{
+							File.WriteAllText(filePath, vehicleJson);
+
+							// Record update of existing item
+							//localFileChanges.TryAdd(vehicleName, $"Vehicle '{fileName}' updated in local wiki");
+							Console.WriteLine($"Vehicle '{fileName}' updated in local wiki");
+						}
 					}
 
 					//WikiEntry entry = new WikiEntry(vehicleName, vehicleWikiEntryFullUrl, VehicleTypeEnum.Ground, vehicleInfo);
@@ -427,6 +449,7 @@ namespace ConsoleScraper
 			}
 			else
 			{
+				// TODO: Abstract this code block if possible
 				string existingFileText = File.ReadAllText(filePath);
 
 				//Create a fake document so we can use helper methods to traverse through the existing file as an HTML document
@@ -439,7 +462,7 @@ namespace ConsoleScraper
 
 				if (newLastModSection != null && oldLastModSection != null)
 				{
-					if (newLastModSection.InnerText != oldLastModSection.InnerText)
+					if (!AreLastModifiedTimesTheSame(oldLastModSection.InnerHtml, newLastModSection.InnerHtml))
 					{
 						vehicleWikiPage.Save($"{filePath}", Encoding.UTF8);
 
@@ -462,6 +485,17 @@ namespace ConsoleScraper
 					throw new InvalidOperationException($"Unable to find the '{LastModifiedSectionId}' section, information comparision failed. Most likely the ID of the last modified section has changed.");
 				}
 			}
+		}
+
+		/// <summary>
+		/// Returns whether or not the two timestamps from the last modified section for a vehicle match
+		/// </summary>
+		/// <param name="oldLastModifiedSection">Timestamp for the older file</param>
+		/// <param name="newLastModifiedSection">Timestamp for the newer file</param>
+		/// <returns>Whether or not the timestamps match</returns>
+		private static bool AreLastModifiedTimesTheSame(string oldLastModifiedSection, string newLastModifiedSection)
+		{
+			return newLastModifiedSection == oldLastModifiedSection;
 		}
 	}
 }
