@@ -518,11 +518,16 @@ namespace ConsoleScraper
 			return newLastModifiedSection == oldLastModifiedSection;
 		}
 
-		private static string RemoveInvalidCharacters(string dirtyPath)
+		/// <summary>
+		/// Removed invalid filename characters from the provided string
+		/// </summary>
+		/// <param name="dirtyString">The string which could potentially have invalid characters in it</param>
+		/// <returns>A string which is valid for file system pathing</returns>
+		private static string RemoveInvalidCharacters(string dirtyString)
 		{
 			var invalidChars = Path.GetInvalidFileNameChars();
 
-			return new string(dirtyPath
+			return new string(dirtyString
 				.Where(x => !invalidChars.Contains(x))
 				.ToArray()
 			);
