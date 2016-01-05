@@ -60,8 +60,6 @@ namespace ConsoleScraper
 			{
 				overallStopwatch.Start();
 
-				
-
 				HtmlWeb webGet = new HtmlWeb();
 
 				// Load Wiki Home page
