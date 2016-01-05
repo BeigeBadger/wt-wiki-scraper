@@ -9,7 +9,6 @@ using System.Collections.Concurrent;
 using System.Threading.Tasks;
 using System.IO;
 using System.Text;
-using System.Security.Cryptography;
 using ConsoleScraper.Enums;
 
 namespace ConsoleScraper
@@ -29,6 +28,23 @@ namespace ConsoleScraper
 		public static string GroundForcesWikiUrl = $"{BaseWikiUrl}index.php?title=Category:Ground_vehicles";
 		public static string LastModifiedSectionId = "footer-info-lastmod";
 
+		public static VehicleCostUnitHelper vehicleCostUnitHelper = new VehicleCostUnitHelper();
+		public static VehicleSpeedUnitHelper vehicleSpeedUnitHelper = new VehicleSpeedUnitHelper();
+		public static VehicleWeightUnitHelper vehicleWeightUnitHelper = new VehicleWeightUnitHelper();
+		public static VehicleCountryHelper vehicleCountryHelper = new VehicleCountryHelper();
+		public static GroundVehicleTypeHelper vehicleTypeHelper = new GroundVehicleTypeHelper();
+		public static VehicleEnginePowerUnitHelper vehicleEnginePowerUnitHelper = new VehicleEnginePowerUnitHelper();
+
+		public static List<string> errorList = new List<string>();
+
+		/** Thread-safe collections **/
+		// Populated with the vehicle name as the key and the HTML content of the page as the value
+		public static ConcurrentDictionary<string, HtmlDocument> vehicleWikiPagesContent = new ConcurrentDictionary<string, HtmlDocument>();
+		// Keeps track of changes made to local files, vehicle name as the key, and the action performed as the value
+		public static ConcurrentDictionary<string, string> localFileChanges = new ConcurrentDictionary<string, string>();
+		// Populated with the vehicle name and vehicle objects
+		public static Dictionary<string, GroundVehicle> vehicleDetails = new Dictionary<string, GroundVehicle>();
+
 		#region Debugging helpers
 
 		public static Stopwatch overallStopwatch = new Stopwatch();
@@ -44,16 +60,9 @@ namespace ConsoleScraper
 			{
 				overallStopwatch.Start();
 
-				VehicleCostUnitHelper vehicleCostUnitHelper = new VehicleCostUnitHelper();
-				VehicleSpeedUnitHelper vehicleSpeedUnitHelper = new VehicleSpeedUnitHelper();
-				VehicleWeightUnitHelper vehicleWeightUnitHelper = new VehicleWeightUnitHelper();
-				VehicleCountryHelper vehicleCountryHelper = new VehicleCountryHelper();
-				GroundVehicleTypeHelper vehicleTypeHelper = new GroundVehicleTypeHelper();
-				VehicleEnginePowerUnitHelper vehicleEnginePowerUnitHelper = new VehicleEnginePowerUnitHelper();
+				
 
 				HtmlWeb webGet = new HtmlWeb();
-
-				List<string> errorList = new List<string>();
 
 				// Load Wiki Home page
 				HtmlDocument groundForcesWikiHomePage = webGet.Load(GroundForcesWikiUrl);
@@ -88,8 +97,6 @@ namespace ConsoleScraper
 
 					// Setup thread-safe collections for processing
 					ConcurrentDictionary<int, HtmlNode> linksToVehicleWikiPages = new ConcurrentDictionary<int, HtmlNode>();
-					ConcurrentDictionary<string, HtmlDocument> vehicleWikiPagesContent = new ConcurrentDictionary<string, HtmlDocument>();
-					ConcurrentDictionary<string, string> localFileChanges = new ConcurrentDictionary<string, string>();
 
 					for (int i = 0; i < vehicleWikiEntryLinks.Count(); i++)
 					{
@@ -103,10 +110,10 @@ namespace ConsoleScraper
 					Task[] webCrawlerTasks = new Task[4]
 					{
 						// Going from 2 to 4 tasks halves the processing time, after 4 tasks the performance gain is negligible
-						Task.Factory.StartNew(() => GetPageHtml(linksToVehicleWikiPages, vehicleWikiPagesContent, localFileChanges)),
-						Task.Factory.StartNew(() => GetPageHtml(linksToVehicleWikiPages, vehicleWikiPagesContent, localFileChanges)),
-						Task.Factory.StartNew(() => GetPageHtml(linksToVehicleWikiPages, vehicleWikiPagesContent, localFileChanges)),
-						Task.Factory.StartNew(() => GetPageHtml(linksToVehicleWikiPages, vehicleWikiPagesContent, localFileChanges))
+						Task.Factory.StartNew(() => GetPageHtml(linksToVehicleWikiPages)),
+						Task.Factory.StartNew(() => GetPageHtml(linksToVehicleWikiPages)),
+						Task.Factory.StartNew(() => GetPageHtml(linksToVehicleWikiPages)),
+						Task.Factory.StartNew(() => GetPageHtml(linksToVehicleWikiPages))
 					};
 
 					// Wait until we have crawled all of the pages
@@ -116,11 +123,8 @@ namespace ConsoleScraper
 					processingStopwatch.Start();
 
 					int indexPosition = 1;
-					Dictionary<string, GroundVehicle> vehicleDetails = new Dictionary<string, GroundVehicle>();
 
-					ProcessWikiHtmlFiles(vehicleDetails, vehicleWikiPagesContent.Values, errorList, vehicleTypeHelper, vehicleWeightUnitHelper,
-						vehicleSpeedUnitHelper, vehicleEnginePowerUnitHelper, vehicleCountryHelper, vehicleCostUnitHelper, indexPosition,
-						totalNumberOfLinksBasedOnDomTraversal);
+					ProcessWikiHtmlFiles(vehicleWikiPagesContent.Values, indexPosition, totalNumberOfLinksBasedOnDomTraversal);
 
 					processingStopwatch.Stop();
 
@@ -167,6 +171,7 @@ namespace ConsoleScraper
 				while (true)
 				{
 					ConsoleKeyInfo k = Console.ReadKey(true);
+
 					if (k.Key == ConsoleKey.Escape)
 					{
 						break;
@@ -180,14 +185,11 @@ namespace ConsoleScraper
 			}
 		}
 
-		// TODO: Make parameters into true globals if possible
 		/// <summary>
 		/// This is called inside the worker tasks to crawl the pages asynchronously
 		/// </summary>
 		/// <param name="vehiclePageLinks">A dictionary that contains a indexer for the key, and a link to the wiki page for that vehicle as the value</param>
-		/// <param name="vehicleWikiPageDocuments">An empty dictionary (used as a global) that will be populated with the vehicle name as the key and the HTML content of the page as the value</param>
-		/// <param name="localFileChanges">An empty dictionary (used as a global) that is used to keep track of changes made to local files, vehicle name as the key, and the action performed as the value</param>
-		public static void GetPageHtml(ConcurrentDictionary<int, HtmlNode> vehiclePageLinks, ConcurrentDictionary<string, HtmlDocument> vehicleWikiPageDocuments, ConcurrentDictionary<string, string> localFileChanges)
+		public static void GetPageHtml(ConcurrentDictionary<int, HtmlNode> vehiclePageLinks)
 		{
 			foreach (var vehiclePageLink in vehiclePageLinks)
 			{
@@ -210,12 +212,12 @@ namespace ConsoleScraper
 				HtmlDocument vehicleWikiPage = vehicleWebGet.Load(vehicleWikiEntryFullUrl);
 
 				// Add page to new dictionary used to extract further data
-				vehicleWikiPageDocuments.TryAdd(vehicleName, vehicleWikiPage);
+				vehicleWikiPagesContent.TryAdd(vehicleName, vehicleWikiPage);
 
-				Console.WriteLine(vehicleWikiPageDocuments.Count());
+				Console.WriteLine(vehicleWikiPagesContent.Count());
 
 				// Update the local repo
-				UpdateLocalStorageForOfflineUse(localFileChanges, vehicleWikiPage, vehicleName);
+				UpdateLocalStorageForOfflineUse(vehicleWikiPage, vehicleName);
 			}
 		}
 
@@ -223,12 +225,10 @@ namespace ConsoleScraper
 		/// Loops through all of the vehicle wiki links that have been provided, attempts to parse the parts that we are interested in -
 		/// the vehicle details table, creates an object from that, then stores the data locally if a flag is set
 		/// </summary>
-		/// <param name="vehicleDetails">An empty dictionary (global) that is populated with the vehicle name and vehicle object</param>
 		/// <param name="vehicleWikiPages">A dictionary that contains links to all of the wiki pages that need parsing</param>
-		/// <param name="errorList">A list (global) that is used to hold any errors that occur</param>
 		/// <param name="indexPosition">The current index we are up to processing - used for error messages</param>
 		/// <param name="expectedNumberOfLinks">The expected number of links to process</param>
-		private static void ProcessWikiHtmlFiles(Dictionary<string, GroundVehicle> vehicleDetails, ICollection<HtmlDocument> vehicleWikiPages, List<string> errorList, GroundVehicleTypeHelper vehicleTypeHelper, VehicleWeightUnitHelper vehicleWeightUnitHelper ,VehicleSpeedUnitHelper vehicleSpeedUnitHelper, VehicleEnginePowerUnitHelper vehicleEnginePowerUnitHelper, VehicleCountryHelper vehicleCountryHelper, VehicleCostUnitHelper vehicleCostUnitHelper, int indexPosition, int expectedNumberOfLinks)
+		private static void ProcessWikiHtmlFiles(ICollection<HtmlDocument> vehicleWikiPages, int indexPosition, int expectedNumberOfLinks)
 		{
 			try
 			{
@@ -403,8 +403,8 @@ namespace ConsoleScraper
 							File.WriteAllText(filePath, vehicleJson);
 
 							// Record addition of new item
-							//localFileChanges.TryAdd(vehicleName, $"New vehicle '{fileName}' added to local wiki"); // Cannot currently happen due to scope of variable - needs refactor to occur when we create the HTML file
-							Console.WriteLine($"New vehicle '{fileName}'  JSON added to local wiki");
+							localFileChanges.TryAdd(vehicleName, $"New vehicle '{fileName}' JSON file added to local wiki"); // Cannot currently happen due to scope of variable - needs refactor to occur when we create the HTML file
+							Console.WriteLine($"New vehicle '{fileName}' JSON file added to local wiki");
 						}
 						else
 						{
@@ -419,8 +419,8 @@ namespace ConsoleScraper
 								File.WriteAllText(filePath, vehicleJson);
 
 								// Record update of existing item
-								//localFileChanges.TryAdd(vehicleName, $"Vehicle '{fileName}' updated in local wiki");
-								Console.WriteLine($"Vehicle '{fileName}' updated in local wiki");
+								localFileChanges.TryAdd(vehicleName, $"Vehicle '{fileName}' JSON file updated in local wiki");
+								Console.WriteLine($"Vehicle '{fileName}' JSON file updated in local wiki");
 							}
 						}
 
@@ -449,10 +449,9 @@ namespace ConsoleScraper
 		/// <summary>
 		/// Adds/updates files in the LocalWiki folder
 		/// </summary>
-		/// <param name="localFileChanges">This is being changed to be a global so it will no longer need to be a parameter</param>
 		/// <param name="vehicleWikiPage">The HTML content of the wiki page</param>
 		/// <param name="vehicleName">The vehicle name of the current wiki page</param>
-		private static void UpdateLocalStorageForOfflineUse(ConcurrentDictionary<string, string> localFileChanges, HtmlDocument vehicleWikiPage, string vehicleName)
+		private static void UpdateLocalStorageForOfflineUse(HtmlDocument vehicleWikiPage, string vehicleName)
 		{
 			// Make path to save the local copy of the wiki in so we can run it offline if needs be
 			string fileName = RemoveInvalidCharacters(vehicleName.Replace(' ', '_').Replace('/', '-'));
@@ -464,8 +463,8 @@ namespace ConsoleScraper
 				vehicleWikiPage.Save($"{filePath}", Encoding.UTF8);
 
 				// Record addition of new item
-				localFileChanges.TryAdd(vehicleName, $"New vehicle '{fileName}' added to local wiki");
-				Console.WriteLine($"New vehicle '{fileName}' added to local wiki");
+				localFileChanges.TryAdd(vehicleName, $"New vehicle '{fileName}' HTML file added to local wiki");
+				Console.WriteLine($"New vehicle '{fileName}' HTML file added to local wiki");
 			}
 			else
 			{
@@ -487,8 +486,8 @@ namespace ConsoleScraper
 						vehicleWikiPage.Save($"{filePath}", Encoding.UTF8);
 
 						// Record update of existing item
-						localFileChanges.TryAdd(vehicleName, $"Vehicle '{fileName}' updated in local wiki");
-						Console.WriteLine($"Vehicle '{fileName}' updated in local wiki");
+						localFileChanges.TryAdd(vehicleName, $"Vehicle '{fileName}' HTML file updated in local wiki");
+						Console.WriteLine($"Vehicle '{fileName}' HTML file updated in local wiki");
 					}
 				}
 				else if (oldLastModSection == null)
@@ -497,8 +496,8 @@ namespace ConsoleScraper
 					vehicleWikiPage.Save($"{filePath}", Encoding.UTF8);
 
 					// Record addition of new item
-					localFileChanges.TryAdd(vehicleName, $"New vehicle '{fileName}' added to local wiki");
-					Console.WriteLine($"New vehicle '{fileName}' added to local wiki");
+					localFileChanges.TryAdd(vehicleName, $"New vehicle '{fileName}' HTML file added to local wiki");
+					Console.WriteLine($"New vehicle '{fileName}' HTML file added to local wiki");
 				}
 				else
 				{
