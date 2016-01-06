@@ -87,22 +87,16 @@ namespace ConsoleScraper
 				}
 				else
 				{
-					// Get "Pages in category "Ground vehicles"" section | <div id="mw-pages"> | document.getElementById('mw-pages')
-					HtmlNode listContainerNode = groundForcesWikiHomePage.DocumentNode.Descendants().Single(d => d.Id == "mw-pages");
-					// Get container that holds the table with the links | <div lang="en" dir="ltr" class="mw-content-ltr"> | document.getElementsByClassName('mw-content-ltr')[1]
-					HtmlNode tableContainerNode = listContainerNode.Descendants("div").Single(d => d.Attributes["class"].Value.Contains("mw-content-ltr"));
-					// Get Vehicle links | div > table > tbody > tr > td > ul > li > a | document.getElementsByClassName('mw-content-ltr')[1].getElementsByTagName('a')
-					List<HtmlNode> vehicleWikiEntryLinks = tableContainerNode.Descendants("table").Single().Descendants("a").ToList();
+					int totalNumberOfLinksBasedOnPageText = 0;
+					int totalNumberOfLinksBasedOnDomTraversal = 0;
+					List <HtmlNode> vehicleWikiEntryLinks = new List<HtmlNode>();
 
-					// Get totals for the number of links to expect, and the number found
-					string totalEntriesTextBlock = listContainerNode.Descendants("p").Single().InnerText;
-					MatchCollection matches = Regex.Matches(totalEntriesTextBlock, @"\d+");
-					int totalNumberOfLinksBasedOnPageText = int.Parse(matches[matches.Count -1].Value);
-					int totalNumberOfLinksBasedOnDomTraversal = vehicleWikiEntryLinks.Count();	// TODO: This is now different from page text link number
+					GetLinksToVehiclePages(vehicleWikiEntryLinks, groundForcesWikiHomePage, out totalNumberOfLinksBasedOnPageText, out totalNumberOfLinksBasedOnDomTraversal);
 
 					// Setup thread-safe collections for processing
 					ConcurrentDictionary<int, HtmlNode> linksToVehicleWikiPages = new ConcurrentDictionary<int, HtmlNode>();
 
+					// Populate the full list of links we need to traverse
 					for (int i = 0; i < vehicleWikiEntryLinks.Count(); i++)
 					{
 						HtmlNode linkNode = vehicleWikiEntryLinks[i];
@@ -191,6 +185,40 @@ namespace ConsoleScraper
 			}
 		}
 
+		public static void GetLinksToVehiclePages(List<HtmlNode> vehicleWikiEntryLinks, HtmlDocument groundForcesWikiHomePage, out int totalNumberOfLinksBasedOnPageText, out int totalNumberOfLinksBasedOnDomTraversal)
+		{
+			// Get "Pages in category "Ground vehicles"" section | <div id="mw-pages"> | document.getElementById('mw-pages')
+			HtmlNode listContainerNode = groundForcesWikiHomePage.DocumentNode.Descendants().Single(d => d.Id == "mw-pages");
+			// Get container that holds the table with the links | <div lang="en" dir="ltr" class="mw-content-ltr"> | document.getElementsByClassName('mw-content-ltr')[1]
+			HtmlNode tableContainerNode = listContainerNode.Descendants("div").Single(d => d.Attributes["class"].Value.Contains("mw-content-ltr"));
+
+			// Get Vehicle links from the initial page | div > table > tbody > tr > td > ul > li > a | document.getElementsByClassName('mw-content-ltr')[1].getElementsByTagName('a')
+			vehicleWikiEntryLinks.AddRange(tableContainerNode.Descendants("table").Single().Descendants("a").ToList());
+
+			// Get totals for the number of links to expect, and the number found
+			string totalEntriesTextBlock = listContainerNode.Descendants("p").Single().InnerText;
+			MatchCollection matches = Regex.Matches(totalEntriesTextBlock, @"\d+");
+			totalNumberOfLinksBasedOnPageText = int.Parse(matches[matches.Count - 1].Value);
+			totalNumberOfLinksBasedOnDomTraversal = vehicleWikiEntryLinks.Count();
+
+			// Get vehicle links from the subsequent pages | <a href="/index.php?title=Category:Ground_vehicles&amp;pagefrom=T-54+mod.+1949#mw-pages" title="Category:Ground vehicles">next 200</a> | document.querySelectorAll('#mw-pages a[Title="Category:Ground vehicles"]')[0]
+			HtmlNode nextPageLink = listContainerNode.Descendants("a").Where(d => d.InnerText.Contains("next") && d.Attributes["title"].Value.Contains("Category:Ground vehicles")).FirstOrDefault();
+
+			if(nextPageLink != null)
+			{
+				// Build the link for the next page
+				Uri subsequentWikPage = new Uri(new Uri(BaseWikiUrl), nextPageLink.Attributes["href"].Value);
+				string pageUrl = System.Net.WebUtility.HtmlDecode(subsequentWikPage.ToString());
+
+				// Load Wiki page
+				HtmlWeb webGet = new HtmlWeb();
+				HtmlDocument groundForcesWikiPage = webGet.Load(pageUrl);
+
+				// Call this method
+				GetLinksToVehiclePages(vehicleWikiEntryLinks, groundForcesWikiPage, out totalNumberOfLinksBasedOnPageText, out totalNumberOfLinksBasedOnDomTraversal);
+			}
+		}
+
 		/// <summary>
 		/// This is called inside the worker tasks to crawl the pages asynchronously
 		/// </summary>
@@ -206,7 +234,7 @@ namespace ConsoleScraper
 				// Fetch page information
 				HtmlNode linkNode = vehiclePageLink.Value;
 				string wikiRelativeUrl = linkNode.Attributes.Single(l => l.Name == "href").Value;
-				string vehicleWikiEntryFullUrl = $"{BaseWikiUrl}{wikiRelativeUrl}";
+				string vehicleWikiEntryFullUrl = new Uri(new Uri(BaseWikiUrl), wikiRelativeUrl).ToString();
 				string vehicleName = linkNode.InnerText;
 
 				Console.WriteLine();
@@ -408,9 +436,7 @@ namespace ConsoleScraper
 
 						//WikiEntry entry = new WikiEntry(vehicleName, vehicleWikiEntryFullUrl, VehicleTypeEnum.Ground, vehicleInfo);
 
-						// HACK: We shouldn't need this conditional, something is going wrong in the concurrent dictionary's TryAdd method for us to get dupes
-						if (!vehicleDetails.ContainsKey(vehicleName))
-							vehicleDetails.Add(vehicleName, groundVehicle);
+						vehicleDetails.Add(vehicleName, groundVehicle);
 
 						Console.ForegroundColor = ConsoleColor.Green;
 						Console.WriteLine($"Processed item {indexPosition} of {expectedNumberOfLinks} successfully");
