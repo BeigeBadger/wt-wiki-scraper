@@ -19,6 +19,9 @@ namespace ConsoleScraper
 		TODO: Think about vehicle scoping
 		TODO: static vs const
 		TODO: Make config parameters for constants eg path, whether to make local files, whether to run against the local repo etc
+
+		TODO: Use the link text from the main page for the vehicle name as some of the titles aren't set correctly
+		TODO: Handle going to the next page to get more vehicles
 	*/
 
 	class Program
@@ -248,16 +251,17 @@ namespace ConsoleScraper
 						rightHandContent.Descendants("table")
 							.SingleOrDefault(d => d.Attributes["class"].Value.Contains("flight-parameters"));
 
-					// Name
-					string vehicleName = System.Net.WebUtility.HtmlDecode(pageTitle.InnerText);
+					// Is sometimes different to the vehicle name
+					string pageTitleName = System.Net.WebUtility.HtmlDecode(pageTitle.InnerText);
 
 					if (infoBox == null)
 					{
 						Console.ForegroundColor = ConsoleColor.Red;
 						Console.WriteLine($"Error processing item {indexPosition} of {expectedNumberOfLinks}");
+						Console.WriteLine();
 						Console.ResetColor();
 
-						errorList.Add($"No Information found for '{vehicleName}', proceeding to next vehicle");
+						errorList.Add($"No Information found for '{pageTitleName}', proceeding to next vehicle");
 						indexPosition++;
 						continue;
 					}
@@ -266,7 +270,7 @@ namespace ConsoleScraper
 						Dictionary<string, string> vehicleAttributes = new Dictionary<string, string>();
 						HtmlNodeCollection rows = infoBox.SelectNodes("tr");
 
-						Console.WriteLine($"The following values were found for {vehicleName}");
+						Console.WriteLine($"The following values were found for {pageTitleName}");
 
 						foreach (HtmlNode row in rows)
 						{
@@ -294,6 +298,10 @@ namespace ConsoleScraper
 						}
 
 						Console.ResetColor();
+
+						// Name
+						string vehicleNameRaw = vehicleAttributes.Single(k => k.Key == "Title").Value.ToString();
+						string vehicleName = RemoveInvalidCharacters(System.Net.WebUtility.HtmlDecode(vehicleNameRaw));
 
 						// Country
 						string countryRawValue = vehicleAttributes.Single(k => k.Key == "Country").Value.ToString();
@@ -404,11 +412,9 @@ namespace ConsoleScraper
 
 						//WikiEntry entry = new WikiEntry(vehicleName, vehicleWikiEntryFullUrl, VehicleTypeEnum.Ground, vehicleInfo);
 
-						string cleanVehicleName = RemoveInvalidCharacters(vehicleName);
-
 						// HACK: We shouldn't need this conditional, something is going wrong in the concurrent dictionary's TryAdd method for us to get dupes
-						if (!vehicleDetails.ContainsKey(cleanVehicleName))
-							vehicleDetails.Add(cleanVehicleName, groundVehicle);
+						if (!vehicleDetails.ContainsKey(vehicleName))
+							vehicleDetails.Add(vehicleName, groundVehicle);
 
 						Console.ForegroundColor = ConsoleColor.Green;
 						Console.WriteLine($"Processed item {indexPosition} of {expectedNumberOfLinks} successfully");
