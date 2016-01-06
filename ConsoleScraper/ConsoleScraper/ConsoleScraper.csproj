@@ -48,6 +48,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Enums\LocalWikiFileTypeEnum.cs" />
     <Compile Include="Enums\VehicleCostUnitEnum.cs" />
     <Compile Include="Enums\VehicleEnginePowerUnitEnum.cs" />
     <Compile Include="Enums\VehicleSpeedUnitEnum.cs" />

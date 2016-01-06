@@ -19,14 +19,18 @@ namespace ConsoleScraper
 		TODO: Think about vehicle scoping
 		TODO: static vs const
 		TODO: Make config parameters for constants eg path, whether to make local files, whether to run against the local repo etc
-		TODO: JSON creation of local files currently returns two less than the HTML version - should be fixed when the creation code is moved to a single place
 	*/
 
 	class Program
 	{
+		public static bool UpdateLocalHtml = true;
+		public static bool UpdateLocalJson = true;
+
 		public static string BaseWikiUrl = "http://wiki.warthunder.com/";
 		public static string GroundForcesWikiUrl = $"{BaseWikiUrl}index.php?title=Category:Ground_vehicles";
 		public static string LastModifiedSectionId = "footer-info-lastmod";
+		public static string LocalWikiHtmlPath = @"..\..\LocalWiki\HTML\";
+		public static string LocalWikiJsonPath = @"..\..\LocalWiki\JSON\";
 
 		public static VehicleCostUnitHelper vehicleCostUnitHelper = new VehicleCostUnitHelper();
 		public static VehicleSpeedUnitHelper vehicleSpeedUnitHelper = new VehicleSpeedUnitHelper();
@@ -132,7 +136,7 @@ namespace ConsoleScraper
 					if (errorList.Any())
 					{
 						Console.ForegroundColor = ConsoleColor.Red;
-						Console.WriteLine($"The following error{(errorList.Count() > 1 ? "s were" : "was")} encountered");
+						Console.WriteLine($"The following error{(errorList.Count() > 1 ? "s were" : "was")} encountered:");
 
 						foreach (string error in errorList)
 						{
@@ -142,13 +146,14 @@ namespace ConsoleScraper
 
 					Console.ResetColor();
 					Console.WriteLine("================================================================");
+					Console.WriteLine();
 
 					overallStopwatch.Stop();
 
 					TimeSpan timeSpan = overallStopwatch.Elapsed;
 					Console.WriteLine($"Completed in {timeSpan.Hours:00}:{timeSpan.Minutes:00}:{timeSpan.Seconds:00}");
 					Console.WriteLine($"Expected total: {totalNumberOfLinksBasedOnPageText}, Actual total: {totalNumberOfLinksBasedOnDomTraversal}");
-					Console.WriteLine($"Vehicle objects created: {vehicleDetails.Count()} (Actual - Errors)");
+					Console.WriteLine($"Vehicle objects created: {vehicleDetails.Count()} (should be Actual - Errors)");
 
 					if(localFileChanges.Any())
 					{
@@ -213,9 +218,6 @@ namespace ConsoleScraper
 				vehicleWikiPagesContent.TryAdd(vehicleName, vehicleWikiPage);
 
 				Console.WriteLine(vehicleWikiPagesContent.Count());
-
-				// Update the local repo
-				UpdateLocalStorageForOfflineUse(vehicleWikiPage, vehicleName);
 			}
 		}
 
@@ -389,43 +391,20 @@ namespace ConsoleScraper
 							LastModified = lastModified
 						};
 
-						string vehicleJson = Newtonsoft.Json.JsonConvert.SerializeObject(groundVehicle, Newtonsoft.Json.Formatting.Indented);
-
-						// Add Json to local directory
-						string fileName = RemoveInvalidCharacters(vehicleName.Replace(' ', '_').Replace('/', '-'));
-						string folderPath = @"..\..\LocalWiki\JSON\";
-						string filePath = $@"{folderPath}{fileName}.json";
-
-						if (!File.Exists(filePath))
+						if (UpdateLocalJson)
 						{
-							File.WriteAllText(filePath, vehicleJson);
-
-							// Record addition of new item
-							localFileChanges.TryAdd(vehicleName, $"New vehicle '{fileName}' JSON file added to local wiki"); // Cannot currently happen due to scope of variable - needs refactor to occur when we create the HTML file
-							Console.WriteLine($"New vehicle '{fileName}' JSON file added to local wiki");
+							UpdateLocalStorageForOfflineUse(vehicleWikiPage, vehicleName, LocalWikiFileTypeEnum.JSON, groundVehicle);
 						}
-						else
+
+						if(UpdateLocalHtml)
 						{
-							string existingFileText = File.ReadAllText(filePath);
-
-							string newLastModSection = groundVehicle.LastModified;
-							GroundVehicle existingVehicle = Newtonsoft.Json.JsonConvert.DeserializeObject<GroundVehicle>(existingFileText);
-							string oldLastModSection = existingVehicle?.LastModified;
-
-							if (!AreLastModifiedTimesTheSame(oldLastModSection, newLastModSection))
-							{
-								File.WriteAllText(filePath, vehicleJson);
-
-								// Record update of existing item
-								localFileChanges.TryAdd(vehicleName, $"Vehicle '{fileName}' JSON file updated in local wiki");
-								Console.WriteLine($"Vehicle '{fileName}' JSON file updated in local wiki");
-							}
+							UpdateLocalStorageForOfflineUse(vehicleWikiPage, vehicleName, LocalWikiFileTypeEnum.HTML, null);
 						}
 
 						//WikiEntry entry = new WikiEntry(vehicleName, vehicleWikiEntryFullUrl, VehicleTypeEnum.Ground, vehicleInfo);
 
 						// HACK: We shouldn't need this conditional, something is going wrong in the concurrent dictionary's TryAdd method for us to get dupes
-						if(!vehicleDetails.ContainsKey(vehicleName))
+						if (!vehicleDetails.ContainsKey(vehicleName))
 							vehicleDetails.Add(vehicleName, groundVehicle);
 
 						Console.ForegroundColor = ConsoleColor.Green;
@@ -443,63 +422,89 @@ namespace ConsoleScraper
 			}
 		}
 
-		// TODO: Make this handle creating local JSON files as well
 		/// <summary>
 		/// Adds/updates files in the LocalWiki folder
 		/// </summary>
 		/// <param name="vehicleWikiPage">The HTML content of the wiki page</param>
 		/// <param name="vehicleName">The vehicle name of the current wiki page</param>
-		private static void UpdateLocalStorageForOfflineUse(HtmlDocument vehicleWikiPage, string vehicleName)
+		private static void UpdateLocalStorageForOfflineUse(HtmlDocument vehicleWikiPage, string vehicleName, LocalWikiFileTypeEnum fileType, IVehicle vehicle = null)
 		{
-			// Make path to save the local copy of the wiki in so we can run it offline if needs be
+			if (fileType == LocalWikiFileTypeEnum.Undefined)
+				throw new ArgumentException("The 'fileType' parameter for the 'UpdateLocalStorageForOfflineUse' is required but was not provided.");
+
 			string fileName = RemoveInvalidCharacters(vehicleName.Replace(' ', '_').Replace('/', '-'));
-			string folderPath = @"..\..\LocalWiki\HTML\";
-			string filePath = $@"{folderPath}{fileName}.html";
+			string folderPath = fileType == LocalWikiFileTypeEnum.HTML ? LocalWikiHtmlPath : LocalWikiJsonPath;
+			string filePath = $@"{folderPath}{fileName}.{fileType.ToString().ToLower()}";
 
-			if (!File.Exists(filePath))
+			if (!Directory.Exists(folderPath))
+				Directory.CreateDirectory(folderPath);
+
+			if (fileType == LocalWikiFileTypeEnum.HTML)
 			{
-				vehicleWikiPage.Save($"{filePath}", Encoding.UTF8);
-
-				// Record addition of new item
-				localFileChanges.TryAdd(vehicleName, $"New vehicle '{fileName}' HTML file added to local wiki");
-				Console.WriteLine($"New vehicle '{fileName}' HTML file added to local wiki");
-			}
-			else
-			{
-				// TODO: Abstract this code block if possible
-				string existingFileText = File.ReadAllText(filePath);
-
-				//Create a fake document so we can use helper methods to traverse through the existing file as an HTML document
-				HtmlDocument htmlDoc = new HtmlDocument();
-				HtmlNode existingHtml = HtmlNode.CreateNode(existingFileText);
-				htmlDoc.DocumentNode.AppendChild(existingHtml);
-
-				var newLastModSection = vehicleWikiPage.DocumentNode.Descendants().SingleOrDefault(x => x.Id == LastModifiedSectionId);
-				var oldLastModSection = existingHtml.OwnerDocument.DocumentNode.Descendants().SingleOrDefault(x => x.Id == LastModifiedSectionId);
-
-				if (newLastModSection != null && oldLastModSection != null)
-				{
-					if (!AreLastModifiedTimesTheSame(oldLastModSection.InnerHtml, newLastModSection.InnerHtml))
-					{
-						vehicleWikiPage.Save($"{filePath}", Encoding.UTF8);
-
-						// Record update of existing item
-						localFileChanges.TryAdd(vehicleName, $"Vehicle '{fileName}' HTML file updated in local wiki");
-						Console.WriteLine($"Vehicle '{fileName}' HTML file updated in local wiki");
-					}
-				}
-				else if (oldLastModSection == null)
+				if (!File.Exists(filePath))
 				{
 					// Add new item
 					vehicleWikiPage.Save($"{filePath}", Encoding.UTF8);
-
-					// Record addition of new item
-					localFileChanges.TryAdd(vehicleName, $"New vehicle '{fileName}' HTML file added to local wiki");
-					Console.WriteLine($"New vehicle '{fileName}' HTML file added to local wiki");
+					AddFileToLocalWiki(vehicleName, fileName, fileType.ToString());
 				}
 				else
 				{
-					throw new InvalidOperationException($"Unable to find the '{LastModifiedSectionId}' section, information comparision failed. Most likely the ID of the last modified section has changed.");
+					string existingFileText = File.ReadAllText(filePath);
+
+					//Create a fake document so we can use helper methods to traverse through the existing file as an HTML document
+					HtmlDocument htmlDoc = new HtmlDocument();
+					HtmlNode existingHtml = HtmlNode.CreateNode(existingFileText);
+					htmlDoc.DocumentNode.AppendChild(existingHtml);
+
+					var newLastModSection = vehicleWikiPage.DocumentNode.Descendants().SingleOrDefault(x => x.Id == LastModifiedSectionId);
+					var oldLastModSection = existingHtml.OwnerDocument.DocumentNode.Descendants().SingleOrDefault(x => x.Id == LastModifiedSectionId);
+
+					if (newLastModSection != null && oldLastModSection != null)
+					{
+						if (!AreLastModifiedTimesTheSame(oldLastModSection.InnerHtml, newLastModSection.InnerHtml))
+						{
+							// Update existing item
+							vehicleWikiPage.Save($"{filePath}", Encoding.UTF8);
+							UpdateFileInLocalWiki(vehicleName, fileName, fileType.ToString());
+						}
+					}
+					else if (oldLastModSection == null)
+					{
+						// Add new item
+						vehicleWikiPage.Save($"{filePath}", Encoding.UTF8);
+						AddFileToLocalWiki(vehicleName, fileName, fileType.ToString());
+					}
+					else
+					{
+						throw new InvalidOperationException($"Unable to find the '{LastModifiedSectionId}' section, information comparision failed. Most likely the ID of the last modified section has changed.");
+					}
+				}
+			}
+			else if(fileType == LocalWikiFileTypeEnum.JSON)
+			{
+				GroundVehicle groundVehicle = (GroundVehicle)vehicle;
+				string vehicleJson = Newtonsoft.Json.JsonConvert.SerializeObject(groundVehicle, Newtonsoft.Json.Formatting.Indented);
+
+				if (!File.Exists(filePath))
+				{
+					// Add new item
+					File.WriteAllText(filePath, vehicleJson);
+					AddFileToLocalWiki(vehicleName, fileName, fileType.ToString());
+				}
+				else
+				{
+					string existingFileText = File.ReadAllText(filePath);
+
+					string newLastModSection = groundVehicle.LastModified;
+					GroundVehicle existingVehicle = Newtonsoft.Json.JsonConvert.DeserializeObject<GroundVehicle>(existingFileText);
+					string oldLastModSection = existingVehicle?.LastModified;
+
+					if (!AreLastModifiedTimesTheSame(oldLastModSection, newLastModSection))
+					{
+						// Update existing
+						File.WriteAllText(filePath, vehicleJson);
+						UpdateFileInLocalWiki(vehicleName, fileName, fileType.ToString());
+					}
 				}
 			}
 		}
@@ -528,6 +533,20 @@ namespace ConsoleScraper
 				.Where(x => !invalidChars.Contains(x))
 				.ToArray()
 			);
+		}
+
+		private static void AddFileToLocalWiki(string vehicleName, string fileName, string fileType)
+		{
+			// Record addition of new item
+			localFileChanges.TryAdd(vehicleName, $"New vehicle '{fileName}' {fileType} file added to local wiki");
+			Console.WriteLine($"New vehicle '{fileName}' {fileType} file added to local wiki");
+		}
+
+		private static void UpdateFileInLocalWiki(string vehicleName, string fileName, string fileType)
+		{
+			// Record update of existing item
+			localFileChanges.TryAdd(vehicleName, $"Vehicle '{fileName}' {fileType} file updated in local wiki");
+			Console.WriteLine($"Vehicle '{fileName}' {fileType} file updated in local wiki");
 		}
 	}
 }
