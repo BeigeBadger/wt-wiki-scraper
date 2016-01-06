@@ -20,7 +20,6 @@ namespace ConsoleScraper
 		TODO: static vs const
 		TODO: Make config parameters for constants eg path, whether to make local files, whether to run against the local repo etc
 
-		TODO: Use the link text from the main page for the vehicle name as some of the titles aren't set correctly
 		TODO: Handle going to the next page to get more vehicles
 	*/
 
@@ -130,7 +129,7 @@ namespace ConsoleScraper
 
 					int indexPosition = 1;
 
-					ProcessWikiHtmlFiles(vehicleWikiPagesContent.Values, indexPosition, totalNumberOfLinksBasedOnPageText);
+					ProcessWikiHtmlFiles(indexPosition, totalNumberOfLinksBasedOnPageText);
 
 					processingStopwatch.Stop();
 
@@ -229,15 +228,16 @@ namespace ConsoleScraper
 		/// Loops through all of the vehicle wiki links that have been provided, attempts to parse the parts that we are interested in -
 		/// the vehicle details table, creates an object from that, then stores the data locally if a flag is set
 		/// </summary>
-		/// <param name="vehicleWikiPages">A dictionary that contains links to all of the wiki pages that need parsing</param>
 		/// <param name="indexPosition">The current index we are up to processing - used for error messages</param>
 		/// <param name="expectedNumberOfLinks">The expected number of links to process</param>
-		private static void ProcessWikiHtmlFiles(ICollection<HtmlDocument> vehicleWikiPages, int indexPosition, int expectedNumberOfLinks)
+		private static void ProcessWikiHtmlFiles(int indexPosition, int expectedNumberOfLinks)
 		{
 			try
 			{
-				foreach (HtmlDocument vehicleWikiPage in vehicleWikiPages)
+				foreach (string vehicleWikiPageLinkTitle in vehicleWikiPagesContent.Keys)
 				{
+					// Page to traverse
+					HtmlDocument vehicleWikiPage = vehicleWikiPagesContent.Single(x => x.Key == vehicleWikiPageLinkTitle).Value;
 					// Get the header that holds the page title | document.getElementsByClassName('firstHeading')[0].firstChild.innerText
 					HtmlNode pageTitle = vehicleWikiPage.DocumentNode.Descendants().Single(d => d.Id == "firstHeading").FirstChild;
 					// Get the div that holds all of the content under the title section | document.getElementById('bodyContent')
@@ -251,8 +251,8 @@ namespace ConsoleScraper
 						rightHandContent.Descendants("table")
 							.SingleOrDefault(d => d.Attributes["class"].Value.Contains("flight-parameters"));
 
-					// Is sometimes different to the vehicle name
-					string pageTitleName = System.Net.WebUtility.HtmlDecode(pageTitle.InnerText);
+					// Name
+					string vehicleName = RemoveInvalidCharacters(System.Net.WebUtility.HtmlDecode(vehicleWikiPageLinkTitle));
 
 					if (infoBox == null)
 					{
@@ -261,7 +261,7 @@ namespace ConsoleScraper
 						Console.WriteLine();
 						Console.ResetColor();
 
-						errorList.Add($"No Information found for '{pageTitleName}', proceeding to next vehicle");
+						errorList.Add($"No Information found for '{vehicleName}', proceeding to next vehicle");
 						indexPosition++;
 						continue;
 					}
@@ -270,7 +270,7 @@ namespace ConsoleScraper
 						Dictionary<string, string> vehicleAttributes = new Dictionary<string, string>();
 						HtmlNodeCollection rows = infoBox.SelectNodes("tr");
 
-						Console.WriteLine($"The following values were found for {pageTitleName}");
+						Console.WriteLine($"The following values were found for {vehicleName}");
 
 						foreach (HtmlNode row in rows)
 						{
@@ -298,10 +298,6 @@ namespace ConsoleScraper
 						}
 
 						Console.ResetColor();
-
-						// Name
-						string vehicleNameRaw = vehicleAttributes.Single(k => k.Key == "Title").Value.ToString();
-						string vehicleName = RemoveInvalidCharacters(System.Net.WebUtility.HtmlDecode(vehicleNameRaw));
 
 						// Country
 						string countryRawValue = vehicleAttributes.Single(k => k.Key == "Country").Value.ToString();
