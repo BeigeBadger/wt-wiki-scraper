@@ -94,8 +94,9 @@ namespace ConsoleScraper
 
 					// Get totals for the number of links to expect, and the number found
 					string totalEntriesTextBlock = listContainerNode.Descendants("p").Single().InnerText;
-					int totalNumberOfLinksBasedOnPageText = int.Parse(Regex.Match(totalEntriesTextBlock, @"\d+").Value);
-					int totalNumberOfLinksBasedOnDomTraversal = vehicleWikiEntryLinks.Count();
+					MatchCollection matches = Regex.Matches(totalEntriesTextBlock, @"\d+");
+					int totalNumberOfLinksBasedOnPageText = int.Parse(matches[matches.Count -1].Value);
+					int totalNumberOfLinksBasedOnDomTraversal = vehicleWikiEntryLinks.Count();	// TODO: This is now different from page text link number
 
 					// Setup thread-safe collections for processing
 					ConcurrentDictionary<int, HtmlNode> linksToVehicleWikiPages = new ConcurrentDictionary<int, HtmlNode>();
@@ -126,7 +127,7 @@ namespace ConsoleScraper
 
 					int indexPosition = 1;
 
-					ProcessWikiHtmlFiles(vehicleWikiPagesContent.Values, indexPosition, totalNumberOfLinksBasedOnDomTraversal);
+					ProcessWikiHtmlFiles(vehicleWikiPagesContent.Values, indexPosition, totalNumberOfLinksBasedOnPageText);
 
 					processingStopwatch.Stop();
 
@@ -248,7 +249,7 @@ namespace ConsoleScraper
 							.SingleOrDefault(d => d.Attributes["class"].Value.Contains("flight-parameters"));
 
 					// Name
-					string vehicleName = pageTitle.InnerText;
+					string vehicleName = System.Net.WebUtility.HtmlDecode(pageTitle.InnerText);
 
 					if (infoBox == null)
 					{
@@ -403,9 +404,11 @@ namespace ConsoleScraper
 
 						//WikiEntry entry = new WikiEntry(vehicleName, vehicleWikiEntryFullUrl, VehicleTypeEnum.Ground, vehicleInfo);
 
+						string cleanVehicleName = RemoveInvalidCharacters(vehicleName);
+
 						// HACK: We shouldn't need this conditional, something is going wrong in the concurrent dictionary's TryAdd method for us to get dupes
-						if (!vehicleDetails.ContainsKey(vehicleName))
-							vehicleDetails.Add(vehicleName, groundVehicle);
+						if (!vehicleDetails.ContainsKey(cleanVehicleName))
+							vehicleDetails.Add(cleanVehicleName, groundVehicle);
 
 						Console.ForegroundColor = ConsoleColor.Green;
 						Console.WriteLine($"Processed item {indexPosition} of {expectedNumberOfLinks} successfully");
