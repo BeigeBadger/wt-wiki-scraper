@@ -19,8 +19,7 @@ namespace ConsoleScraper
 		TODO: Think about vehicle scoping
 		TODO: static vs const
 		TODO: Make config parameters for constants eg path, whether to make local files, whether to run against the local repo etc
-
-		TODO: Handle going to the next page to get more vehicles
+		TODO: Make  code more readable - better names, more comments etc
 	*/
 
 	class Program
