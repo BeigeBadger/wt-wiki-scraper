@@ -88,6 +88,7 @@ namespace ConsoleScraper
 				}
 				else
 				{
+					// Setup initial vars
 					int totalNumberOfLinksBasedOnPageText = 0;
 					int totalNumberOfLinksBasedOnDomTraversal = 0;
 					List <HtmlNode> vehicleWikiEntryLinks = new List<HtmlNode>();
@@ -124,6 +125,7 @@ namespace ConsoleScraper
 
 					int indexPosition = 1;
 
+					// Extract information from the pages we've traversed
 					ProcessWikiHtmlFiles(indexPosition, totalNumberOfLinksBasedOnPageText);
 
 					processingStopwatch.Stop();
@@ -148,11 +150,13 @@ namespace ConsoleScraper
 
 					overallStopwatch.Stop();
 
+					// Write out summary
 					TimeSpan timeSpan = overallStopwatch.Elapsed;
 					Console.WriteLine($"Completed in {timeSpan.Hours:00}:{timeSpan.Minutes:00}:{timeSpan.Seconds:00}");
 					Console.WriteLine($"Expected total: {totalNumberOfLinksBasedOnPageText}, Actual total: {totalNumberOfLinksBasedOnDomTraversal}");
 					Console.WriteLine($"Vehicle objects created: {vehicleDetails.Count()} (should be Actual - Errors)");
 
+					// Write out local file changes
 					if(localFileChanges.Any())
 					{
 						Console.WriteLine();
@@ -293,6 +297,7 @@ namespace ConsoleScraper
 					// Name
 					string vehicleName = RemoveInvalidCharacters(System.Net.WebUtility.HtmlDecode(vehicleWikiPageLinkTitle));
 
+					// Fail fast and create error if there is no info box
 					if (infoBox == null)
 					{
 						Console.ForegroundColor = ConsoleColor.Red;
@@ -306,11 +311,13 @@ namespace ConsoleScraper
 					}
 					else
 					{
+						// Setup local vars
 						Dictionary<string, string> vehicleAttributes = new Dictionary<string, string>();
 						HtmlNodeCollection rows = infoBox.SelectNodes("tr");
 
 						Console.WriteLine($"The following values were found for {vehicleName}");
 
+						// Traverse the info box and pull out all of the attribute title and value pairs
 						foreach (HtmlNode row in rows)
 						{
 							HtmlNodeCollection cells = row.SelectNodes("td");
@@ -435,6 +442,7 @@ namespace ConsoleScraper
 							LastModified = lastModified
 						};
 
+						// Update the local storage if requested
 						if (UpdateLocalJson)
 						{
 							UpdateLocalStorageForOfflineUse(vehicleWikiPage, vehicleName, LocalWikiFileTypeEnum.JSON, groundVehicle);
@@ -447,6 +455,7 @@ namespace ConsoleScraper
 
 						//WikiEntry entry = new WikiEntry(vehicleName, vehicleWikiEntryFullUrl, VehicleTypeEnum.Ground, vehicleInfo);
 
+						// Add the found information to the master list
 						vehicleDetails.Add(vehicleName, groundVehicle);
 
 						Console.ForegroundColor = ConsoleColor.Green;
@@ -474,6 +483,7 @@ namespace ConsoleScraper
 			if (fileType == LocalWikiFileTypeEnum.Undefined)
 				throw new ArgumentException("The 'fileType' parameter for the 'UpdateLocalStorageForOfflineUse' is required but was not provided.");
 
+			// Build vars that will be used for the local file
 			string fileName = RemoveInvalidCharacters(vehicleName.Replace(' ', '_').Replace('/', '-'));
 			string folderPath = fileType == LocalWikiFileTypeEnum.HTML ? LocalWikiHtmlPath : LocalWikiJsonPath;
 			string filePath = $@"{folderPath}{fileName}.{fileType.ToString().ToLower()}";
@@ -481,6 +491,7 @@ namespace ConsoleScraper
 			if (!Directory.Exists(folderPath))
 				Directory.CreateDirectory(folderPath);
 
+			// Handle HTML files
 			if (fileType == LocalWikiFileTypeEnum.HTML)
 			{
 				if (!File.Exists(filePath))
@@ -498,11 +509,14 @@ namespace ConsoleScraper
 					HtmlNode existingHtml = HtmlNode.CreateNode(existingFileText);
 					htmlDoc.DocumentNode.AppendChild(existingHtml);
 
+					// Get out the last modified times for comparison
 					var newLastModSection = vehicleWikiPage.DocumentNode.Descendants().SingleOrDefault(x => x.Id == LastModifiedSectionId);
 					var oldLastModSection = existingHtml.OwnerDocument.DocumentNode.Descendants().SingleOrDefault(x => x.Id == LastModifiedSectionId);
 
+					// If both files have a last modified time
 					if (newLastModSection != null && oldLastModSection != null)
 					{
+						// Update the existing one if the times are different
 						if (!AreLastModifiedTimesTheSame(oldLastModSection.InnerHtml, newLastModSection.InnerHtml))
 						{
 							// Update existing item
@@ -510,11 +524,12 @@ namespace ConsoleScraper
 							RecordUpdateFileInLocalWiki(vehicleName, fileName, fileType.ToString());
 						}
 					}
+					// Add the item if the existing one has no last modified time
 					else if (oldLastModSection == null)
 					{
-						// Add new item
+						// Overwrite old item
 						vehicleWikiPage.Save($"{filePath}", Encoding.UTF8);
-						RecordAddFileToLocalWiki(vehicleName, fileName, fileType.ToString());
+						RecordUpdateFileInLocalWiki(vehicleName, fileName, fileType.ToString());
 					}
 					else
 					{
@@ -522,6 +537,7 @@ namespace ConsoleScraper
 					}
 				}
 			}
+			// Handle JSON files
 			else if(fileType == LocalWikiFileTypeEnum.JSON)
 			{
 				GroundVehicle groundVehicle = (GroundVehicle)vehicle;
@@ -536,16 +552,32 @@ namespace ConsoleScraper
 				else
 				{
 					string existingFileText = File.ReadAllText(filePath);
-
-					string newLastModSection = groundVehicle.LastModified;
 					GroundVehicle existingVehicle = Newtonsoft.Json.JsonConvert.DeserializeObject<GroundVehicle>(existingFileText);
+
+					// Get out the last modified times for comparison
+					string newLastModSection = groundVehicle.LastModified;
 					string oldLastModSection = existingVehicle?.LastModified;
 
-					if (!AreLastModifiedTimesTheSame(oldLastModSection, newLastModSection))
+					// If both files have a last modified time
+					if (newLastModSection != null && oldLastModSection != null)
 					{
-						// Update existing
-						File.WriteAllText(filePath, vehicleJson);
+						if (!AreLastModifiedTimesTheSame(oldLastModSection, newLastModSection))
+						{
+							// Update existing
+							File.WriteAllText(filePath, vehicleJson);
+							RecordUpdateFileInLocalWiki(vehicleName, fileName, fileType.ToString());
+						}
+					}
+					// Add the item if the existing one has no last modified time
+					else if (oldLastModSection == null)
+					{
+						// Overwrite old item
+						vehicleWikiPage.Save($"{filePath}", Encoding.UTF8);
 						RecordUpdateFileInLocalWiki(vehicleName, fileName, fileType.ToString());
+					}
+					else
+					{
+						throw new InvalidOperationException($"Unable to find the '{LastModifiedSectionId}' section, information comparision failed.");
 					}
 				}
 			}
