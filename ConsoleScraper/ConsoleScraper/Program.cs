@@ -24,6 +24,7 @@ namespace ConsoleScraper
 
 	class Program
 	{
+		// Constants that should be moved into app.config
 		public static bool UpdateLocalHtml = true;
 		public static bool UpdateLocalJson = true;
 
@@ -33,6 +34,7 @@ namespace ConsoleScraper
 		public static string LocalWikiHtmlPath = @"..\..\LocalWiki\HTML\";
 		public static string LocalWikiJsonPath = @"..\..\LocalWiki\JSON\";
 
+		// Helper objects
 		public static VehicleCostUnitHelper vehicleCostUnitHelper = new VehicleCostUnitHelper();
 		public static VehicleSpeedUnitHelper vehicleSpeedUnitHelper = new VehicleSpeedUnitHelper();
 		public static VehicleWeightUnitHelper vehicleWeightUnitHelper = new VehicleWeightUnitHelper();
@@ -184,10 +186,20 @@ namespace ConsoleScraper
 			}
 		}
 
-		public static void GetLinksToVehiclePages(List<HtmlNode> vehicleWikiEntryLinks, HtmlDocument groundForcesWikiHomePage, out int totalNumberOfLinksBasedOnPageText, out int totalNumberOfLinksBasedOnDomTraversal)
+		/// <summary>
+		/// Finds all of the links to vehicles on the current page, then checks to see
+		/// if there is a link to the next page, if there is then that page is loaded
+		/// and this method is called recursively until all of the links have been
+		/// gathered.
+		/// </summary>
+		/// <param name="vehicleWikiEntryLinks">The list to store the found links in</param>
+		/// <param name="pageUrl">The url of the page to check for more links</param>
+		/// <param name="totalNumberOfLinksBasedOnPageText">Used to store how many links we should expect</param>
+		/// <param name="totalNumberOfLinksBasedOnDomTraversal">Used to store how many links we actually found</param>
+		public static void GetLinksToVehiclePages(List<HtmlNode> vehicleWikiEntryLinks, HtmlDocument pageUrl, out int totalNumberOfLinksBasedOnPageText, out int totalNumberOfLinksBasedOnDomTraversal)
 		{
 			// Get "Pages in category "Ground vehicles"" section | <div id="mw-pages"> | document.getElementById('mw-pages')
-			HtmlNode listContainerNode = groundForcesWikiHomePage.DocumentNode.Descendants().Single(d => d.Id == "mw-pages");
+			HtmlNode listContainerNode = pageUrl.DocumentNode.Descendants().Single(d => d.Id == "mw-pages");
 			// Get container that holds the table with the links | <div lang="en" dir="ltr" class="mw-content-ltr"> | document.getElementsByClassName('mw-content-ltr')[1]
 			HtmlNode tableContainerNode = listContainerNode.Descendants("div").Single(d => d.Attributes["class"].Value.Contains("mw-content-ltr"));
 
@@ -207,11 +219,11 @@ namespace ConsoleScraper
 			{
 				// Build the link for the next page
 				Uri subsequentWikPage = new Uri(new Uri(BaseWikiUrl), nextPageLink.Attributes["href"].Value);
-				string pageUrl = System.Net.WebUtility.HtmlDecode(subsequentWikPage.ToString());
+				string subsequentPageUrl = System.Net.WebUtility.HtmlDecode(subsequentWikPage.ToString());
 
 				// Load Wiki page
 				HtmlWeb webGet = new HtmlWeb();
-				HtmlDocument groundForcesWikiPage = webGet.Load(pageUrl);
+				HtmlDocument groundForcesWikiPage = webGet.Load(subsequentPageUrl);
 
 				// Call this method
 				GetLinksToVehiclePages(vehicleWikiEntryLinks, groundForcesWikiPage, out totalNumberOfLinksBasedOnPageText, out totalNumberOfLinksBasedOnDomTraversal);
@@ -475,7 +487,7 @@ namespace ConsoleScraper
 				{
 					// Add new item
 					vehicleWikiPage.Save($"{filePath}", Encoding.UTF8);
-					AddFileToLocalWiki(vehicleName, fileName, fileType.ToString());
+					RecordAddFileToLocalWiki(vehicleName, fileName, fileType.ToString());
 				}
 				else
 				{
@@ -495,14 +507,14 @@ namespace ConsoleScraper
 						{
 							// Update existing item
 							vehicleWikiPage.Save($"{filePath}", Encoding.UTF8);
-							UpdateFileInLocalWiki(vehicleName, fileName, fileType.ToString());
+							RecordUpdateFileInLocalWiki(vehicleName, fileName, fileType.ToString());
 						}
 					}
 					else if (oldLastModSection == null)
 					{
 						// Add new item
 						vehicleWikiPage.Save($"{filePath}", Encoding.UTF8);
-						AddFileToLocalWiki(vehicleName, fileName, fileType.ToString());
+						RecordAddFileToLocalWiki(vehicleName, fileName, fileType.ToString());
 					}
 					else
 					{
@@ -519,7 +531,7 @@ namespace ConsoleScraper
 				{
 					// Add new item
 					File.WriteAllText(filePath, vehicleJson);
-					AddFileToLocalWiki(vehicleName, fileName, fileType.ToString());
+					RecordAddFileToLocalWiki(vehicleName, fileName, fileType.ToString());
 				}
 				else
 				{
@@ -533,7 +545,7 @@ namespace ConsoleScraper
 					{
 						// Update existing
 						File.WriteAllText(filePath, vehicleJson);
-						UpdateFileInLocalWiki(vehicleName, fileName, fileType.ToString());
+						RecordUpdateFileInLocalWiki(vehicleName, fileName, fileType.ToString());
 					}
 				}
 			}
@@ -565,14 +577,26 @@ namespace ConsoleScraper
 			);
 		}
 
-		private static void AddFileToLocalWiki(string vehicleName, string fileName, string fileType)
+		/// <summary>
+		/// Records the addition of a file to the local wiki
+		/// </summary>
+		/// <param name="vehicleName">Vehicle the file is for</param>
+		/// <param name="fileName">File name that was added</param>
+		/// <param name="fileType">File type that was added</param>
+		private static void RecordAddFileToLocalWiki(string vehicleName, string fileName, string fileType)
 		{
 			// Record addition of new item
 			localFileChanges.TryAdd(vehicleName, $"New vehicle '{fileName}' {fileType} file added to local wiki");
 			Console.WriteLine($"New vehicle '{fileName}' {fileType} file added to local wiki");
 		}
 
-		private static void UpdateFileInLocalWiki(string vehicleName, string fileName, string fileType)
+		/// <summary>
+		/// Records the update of a file in the local wiki
+		/// </summary>
+		/// <param name="vehicleName">Vehicle the file is for</param>
+		/// <param name="fileName">File name that was updated</param>
+		/// <param name="fileType">File type that was updated</param>
+		private static void RecordUpdateFileInLocalWiki(string vehicleName, string fileName, string fileType)
 		{
 			// Record update of existing item
 			localFileChanges.TryAdd(vehicleName, $"Vehicle '{fileName}' {fileType} file updated in local wiki");
