@@ -456,7 +456,9 @@ namespace ConsoleScraper
 
 				if (ConfigurationManager.AppSettings["UpdateExcelDocument"] == "True")
 				{
-					foreach(GroundVehicle groundVehicle in vehicleDetails.Values)
+					Dictionary<string, GroundVehicle> orderedGroundVehicles = vehicleDetails.OrderBy(x => x.Key).ToDictionary(d => d.Key, d => d.Value);
+
+					foreach (GroundVehicle groundVehicle in orderedGroundVehicles.Values)
 					{
 						AddGroundVehicleRowToSpreadsheet(groundVehicle, worksheet);
 					}
