@@ -604,6 +604,7 @@ namespace ConsoleScraper
 		private static void RecordAddFileToLocalWiki(string vehicleName, string fileName, string fileType)
 		{
 			// Record addition of new item
+			// TODO: Change key to include the vehicle name so that the file type that calls this second (HTML) doesn't get excluded due to duplicate key restraint
 			localFileChanges.TryAdd(vehicleName, $"New vehicle '{fileName}' {fileType} file added to local wiki");
 			Console.WriteLine($"New vehicle '{fileName}' {fileType} file added to local wiki");
 		}
@@ -617,6 +618,7 @@ namespace ConsoleScraper
 		private static void RecordUpdateFileInLocalWiki(string vehicleName, string fileName, string fileType)
 		{
 			// Record update of existing item
+			// TODO: Change key to include the vehicle name so that the file type that calls this second (HTML) doesn't get excluded due to duplicate key restraint
 			localFileChanges.TryAdd(vehicleName, $"Vehicle '{fileName}' {fileType} file updated in local wiki");
 			Console.WriteLine($"Vehicle '{fileName}' {fileType} file updated in local wiki");
 		}
