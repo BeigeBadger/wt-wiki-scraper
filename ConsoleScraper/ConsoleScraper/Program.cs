@@ -564,7 +564,7 @@ namespace ConsoleScraper
 					else
 					{
 						throw new InvalidOperationException($"Unable to find the '{ConfigurationManager.AppSettings["LastModifiedSectionId"]}' section, information comparision failed.");
-                    }
+					}
 				}
 			}
 		}
