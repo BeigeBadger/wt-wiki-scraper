@@ -31,12 +31,12 @@ namespace ConsoleScraper.Models
 		public const string UsaAbbreviation = "USA";
 		public const string GermanyAbbreviation = "Germany";
 		public const string UssrAbbreviation = "USSR";
-		public const string BritainAbbreviation = "Britain";
+		public const string BritainAbbreviation = "Great Britain";
 		public const string JapanAbbreviation = "Japan";
 		public const string UsaName = "United States of America";
 		public const string GermanyName = GermanyAbbreviation;
 		public const string UssrName = UssrAbbreviation;
-		public const string BritainName = "Great Britain";
+		public const string BritainName = BritainAbbreviation;
 		public const string JapanName = JapanAbbreviation;
 
 		public VehicleCountryHelper() { }
@@ -65,7 +65,7 @@ namespace ConsoleScraper.Models
 			}
 			else if (countryAbbreviation.Equals(BritainAbbreviation))
 			{
-				return new VehicleCountryHelper(CountryEnum.Britain, CountryEnum.Britain.ToString(), BritainAbbreviation);
+				return new VehicleCountryHelper(CountryEnum.GreatBritain, CountryEnum.GreatBritain.ToString(), BritainAbbreviation);
 			}
 			else if (countryAbbreviation.Equals(JapanAbbreviation))
 			{
@@ -91,7 +91,7 @@ namespace ConsoleScraper.Models
 			}
 			else if (countryName.Equals(BritainAbbreviation))
 			{
-				return new VehicleCountryHelper(CountryEnum.Britain, CountryEnum.Britain.ToString(), BritainAbbreviation);
+				return new VehicleCountryHelper(CountryEnum.GreatBritain, CountryEnum.GreatBritain.ToString(), BritainAbbreviation);
 			}
 			else if (countryName.Equals(JapanAbbreviation))
 			{

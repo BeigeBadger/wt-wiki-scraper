@@ -6,7 +6,7 @@
 		USA = 1,
 		Germany = 2,
 		USSR = 3,
-		Britain = 4,
+		GreatBritain = 4,
 		Japan = 5
 	}
 }

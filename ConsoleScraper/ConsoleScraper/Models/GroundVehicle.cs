@@ -15,7 +15,7 @@ namespace ConsoleScraper.Models
 		int EnginePower { get; set; }
 		double MaxSpeed { get; set; }
 		string HullArmourThickness { get; set; }
-		string SuperStructureArmourThickness { get; set; }
+		string SuperstructureArmourThickness { get; set; }
 		TimeSpan TimeForFreeRepair { get; set; }
 		long MaxRepairCost { get; set; }
 		long PurchaseCost { get; set; }
@@ -38,7 +38,7 @@ namespace ConsoleScraper.Models
 		public int EnginePower { get; set; }
 		public double MaxSpeed { get; set; }
 		public string HullArmourThickness { get; set; }
-		public string SuperStructureArmourThickness { get; set; }
+		public string SuperstructureArmourThickness { get; set; }
 		public TimeSpan TimeForFreeRepair { get; set; }
 		public long MaxRepairCost { get; set; }
 		public long PurchaseCost { get; set; }

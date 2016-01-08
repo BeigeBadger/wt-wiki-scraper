@@ -11,6 +11,7 @@ using System.IO;
 using System.Text;
 using System.Configuration;
 using ConsoleScraper.Enums;
+using OfficeOpenXml;
 
 namespace ConsoleScraper
 {
@@ -266,6 +267,26 @@ namespace ConsoleScraper
 		{
 			try
 			{
+				// Setup objects to handle creating the spreadsheet
+				FileInfo excelFile = ConfigurationManager.AppSettings["UpdateExcelDocument"] == "True"
+					? new FileInfo($"{ConfigurationManager.AppSettings["LocalWikiExcelPath"]}GroundVehicleData.xlsx")
+					: null;
+				ExcelPackage excelPackage = ConfigurationManager.AppSettings["UpdateExcelDocument"] == "True"
+					? new ExcelPackage(excelFile)
+					: null;
+				ExcelWorksheet worksheet = ConfigurationManager.AppSettings["UpdateExcelDocument"] == "True"
+					? excelPackage.Workbook.Worksheets.FirstOrDefault() == null
+						? excelPackage.Workbook.Worksheets.Add("Data")
+						: excelPackage.Workbook.Worksheets.Single(w => w.Name == "Data")
+					: null;
+
+				if (ConfigurationManager.AppSettings["UpdateExcelDocument"] == "True")
+				{
+					// Clear out old data before populating the headers again
+					worksheet.DeleteColumn(1, 30);
+					CreateGroundVehicleSpreadsheetHeaders(worksheet);
+				}
+
 				foreach (string vehicleWikiPageLinkTitle in vehicleWikiPagesContent.Keys)
 				{
 					// Page to traverse
@@ -395,7 +416,7 @@ namespace ConsoleScraper
 							EnginePower = enginePowerWithoutUnits,
 							MaxSpeed = maxSpeedWithoutUnits,
 							HullArmourThickness = vehicleHullArmourThickness,
-							SuperStructureArmourThickness = vehicleSuperstructureArmourThickness,
+							SuperstructureArmourThickness = vehicleSuperstructureArmourThickness,
 							TimeForFreeRepair = vehicleFreeRepairTime,
 							MaxRepairCost = vehicleMaxRepairCost,
 							PurchaseCost = vehiclePurchaseCost,
@@ -418,6 +439,11 @@ namespace ConsoleScraper
 							UpdateLocalStorageForOfflineUse(vehicleWikiPage, vehicleName, LocalWikiFileTypeEnum.HTML, null);
 						}
 
+						if (ConfigurationManager.AppSettings["UpdateExcelDocument"] == "True")
+						{
+							AddGroundVehicleRowToSpreadsheet(groundVehicle, worksheet);
+						}
+
 						//WikiEntry entry = new WikiEntry(vehicleName, vehicleWikiEntryFullUrl, VehicleTypeEnum.Ground, vehicleInfo);
 
 						// Add the found information to the master list
@@ -431,10 +457,82 @@ namespace ConsoleScraper
 
 					indexPosition++;
 				}
+
+				if (ConfigurationManager.AppSettings["UpdateExcelDocument"] == "True")
+				{
+					// Make columns fit content then save the file
+					worksheet.Cells["A1:S1"].AutoFitColumns();
+					excelPackage.Save();
+				}
 			}
 			catch (Exception ex)
 			{
 				Console.WriteLine(ex);
+			}
+		}
+
+		/// <summary>
+		/// Creates the headers for the Ground Vehicles spreadsheet
+		/// </summary>
+		/// <param name="worksheet">The worksheet to create the headers in</param>
+		private static void CreateGroundVehicleSpreadsheetHeaders(ExcelWorksheet worksheet)
+		{
+			//Headers
+			worksheet.Cells["A1"].Value = "Name";
+			worksheet.Cells["B1"].Value = "Country";
+			worksheet.Cells["C1"].Value = "Vehicle Type";
+			worksheet.Cells["D1"].Value = "Rank";
+			worksheet.Cells["E1"].Value = "Battle Rating";
+			worksheet.Cells["F1"].Value = "Weight";
+			worksheet.Cells["G1"].Value = "Weight Unit";
+			worksheet.Cells["H1"].Value = "Engine Power";
+			worksheet.Cells["I1"].Value = "Engine Power Unit";
+			worksheet.Cells["J1"].Value = "Max Speed";
+			worksheet.Cells["K1"].Value = "Max Speed Unit";
+			worksheet.Cells["L1"].Value = "Hull Armour Thickness";
+			worksheet.Cells["M1"].Value = "Superstructure Armour Thickness";
+			worksheet.Cells["N1"].Value = "Time For Free Repair";
+			worksheet.Cells["O1"].Value = "Max Repair Cost";
+			worksheet.Cells["P1"].Value = "Max Repair Cost Unit";
+			worksheet.Cells["Q1"].Value = "Purchase Cost";
+			worksheet.Cells["R1"].Value = "Purchase Cost Unit";
+			worksheet.Cells["S1"].Value = "Last Modified";
+
+			worksheet.Cells["A1:S1"].Style.Font.Bold = true;
+		}
+
+		/// <summary>
+		/// Adds an entry for a ground vehicle to a spreadsheet
+		/// </summary>
+		/// <param name="groundVehicle">The vehicle to pull the information from</param>
+		/// <param name="worksheet">The worksheet to add the data to</param>
+		private static void AddGroundVehicleRowToSpreadsheet(GroundVehicle groundVehicle, ExcelWorksheet worksheet)
+		{
+			if (groundVehicle != null)
+			{
+				// Get the row we are up to
+				int indexPosition = worksheet.Dimension.End.Row + 1;
+
+				// Add values
+				worksheet.Cells[$"A{indexPosition}"].Value = groundVehicle.Name;
+				worksheet.Cells[$"B{indexPosition}"].Value = groundVehicle.Country;
+				worksheet.Cells[$"C{indexPosition}"].Value = groundVehicle.VehicleType.Name;
+				worksheet.Cells[$"D{indexPosition}"].Value = groundVehicle.Rank;
+				worksheet.Cells[$"E{indexPosition}"].Value = groundVehicle.BattleRating;
+				worksheet.Cells[$"F{indexPosition}"].Value = groundVehicle.Weight;
+				worksheet.Cells[$"G{indexPosition}"].Value = groundVehicle.WeightUnit.Name;
+				worksheet.Cells[$"H{indexPosition}"].Value = groundVehicle.EnginePower;
+				worksheet.Cells[$"I{indexPosition}"].Value = groundVehicle.EnginePowerUnit.Name;
+				worksheet.Cells[$"J{indexPosition}"].Value = groundVehicle.MaxSpeed;
+				worksheet.Cells[$"K{indexPosition}"].Value = groundVehicle.MaxSpeedUnit.Name;
+				worksheet.Cells[$"L{indexPosition}"].Value = groundVehicle.HullArmourThickness;
+				worksheet.Cells[$"M{indexPosition}"].Value = groundVehicle.SuperstructureArmourThickness;
+				worksheet.Cells[$"N{indexPosition}"].Value = groundVehicle.TimeForFreeRepair;
+				worksheet.Cells[$"O{indexPosition}"].Value = groundVehicle.MaxRepairCost;
+				worksheet.Cells[$"P{indexPosition}"].Value = groundVehicle.MaxRepairCostUnit.Name;
+				worksheet.Cells[$"Q{indexPosition}"].Value = groundVehicle.PurchaseCost;
+				worksheet.Cells[$"R{indexPosition}"].Value = groundVehicle.PurchaseCostUnit.Name;
+				worksheet.Cells[$"S{indexPosition}"].Value = groundVehicle.LastModified;
 			}
 		}
 
@@ -480,106 +578,113 @@ namespace ConsoleScraper
 		/// <param name="vehicleName">The vehicle name of the current wiki page</param>
 		private static void UpdateLocalStorageForOfflineUse(HtmlDocument vehicleWikiPage, string vehicleName, LocalWikiFileTypeEnum fileType, IVehicle vehicle = null)
 		{
-			if (fileType == LocalWikiFileTypeEnum.Undefined)
-				throw new ArgumentException("The 'fileType' parameter for the 'UpdateLocalStorageForOfflineUse' is required but was not provided.");
-
-			// Build vars that will be used for the local file
-			string fileName = RemoveInvalidCharacters(vehicleName.Replace(' ', '_').Replace('/', '-'));
-			string folderPath = fileType == LocalWikiFileTypeEnum.HTML ? ConfigurationManager.AppSettings["LocalWikiHtmlPath"] : ConfigurationManager.AppSettings["LocalWikiJsonPath"];
-			string filePath = $@"{folderPath}{fileName}.{fileType.ToString().ToLower()}";
-
-			if (!Directory.Exists(folderPath))
-				Directory.CreateDirectory(folderPath);
-
-			// Handle HTML files
-			if (fileType == LocalWikiFileTypeEnum.HTML)
+			try
 			{
-				if (!File.Exists(filePath))
+				if (fileType == LocalWikiFileTypeEnum.Undefined)
+					throw new ArgumentException("The 'fileType' parameter for the 'UpdateLocalStorageForOfflineUse' is required but was not provided.");
+
+				// Build vars that will be used for the local file
+				string fileName = RemoveInvalidCharacters(vehicleName.Replace(' ', '_').Replace('/', '-'));
+				string folderPath = fileType == LocalWikiFileTypeEnum.HTML ? ConfigurationManager.AppSettings["LocalWikiHtmlPath"] : ConfigurationManager.AppSettings["LocalWikiJsonPath"];
+				string filePath = $@"{folderPath}{fileName}.{fileType.ToString().ToLower()}";
+
+				if (!Directory.Exists(folderPath))
+					Directory.CreateDirectory(folderPath);
+
+				// Handle HTML files
+				if (fileType == LocalWikiFileTypeEnum.HTML)
 				{
-					// Add new item
-					vehicleWikiPage.Save($"{filePath}", Encoding.UTF8);
-					RecordAddFileToLocalWiki(vehicleName, fileName, fileType.ToString());
-				}
-				else
-				{
-					string existingFileText = File.ReadAllText(filePath);
-
-					//Create a fake document so we can use helper methods to traverse through the existing file as an HTML document
-					HtmlDocument htmlDoc = new HtmlDocument();
-					HtmlNode existingHtml = HtmlNode.CreateNode(existingFileText);
-					htmlDoc.DocumentNode.AppendChild(existingHtml);
-
-					// Get out the last modified times for comparison
-					var newLastModSection = vehicleWikiPage.DocumentNode.Descendants().SingleOrDefault(x => x.Id == ConfigurationManager.AppSettings["LastModifiedSectionId"]);
-					var oldLastModSection = existingHtml.OwnerDocument.DocumentNode.Descendants().SingleOrDefault(x => x.Id == ConfigurationManager.AppSettings["LastModifiedSectionId"]);
-
-					// If both files have a last modified time
-					if (newLastModSection != null && oldLastModSection != null)
+					if (!File.Exists(filePath))
 					{
-						// Update the existing one if the times are different
-						if (!AreLastModifiedTimesTheSame(oldLastModSection.InnerHtml, newLastModSection.InnerHtml))
+						// Add new item
+						vehicleWikiPage.Save($"{filePath}", Encoding.UTF8);
+						RecordAddFileToLocalWiki(vehicleName, fileName, fileType.ToString());
+					}
+					else
+					{
+						string existingFileText = File.ReadAllText(filePath);
+
+						//Create a fake document so we can use helper methods to traverse through the existing file as an HTML document
+						HtmlDocument htmlDoc = new HtmlDocument();
+						HtmlNode existingHtml = HtmlNode.CreateNode(existingFileText);
+						htmlDoc.DocumentNode.AppendChild(existingHtml);
+
+						// Get out the last modified times for comparison
+						var newLastModSection = vehicleWikiPage.DocumentNode.Descendants().SingleOrDefault(x => x.Id == ConfigurationManager.AppSettings["LastModifiedSectionId"]);
+						var oldLastModSection = existingHtml.OwnerDocument.DocumentNode.Descendants().SingleOrDefault(x => x.Id == ConfigurationManager.AppSettings["LastModifiedSectionId"]);
+
+						// If both files have a last modified time
+						if (newLastModSection != null && oldLastModSection != null)
+						{
+							// Update the existing one if the times are different
+							if (!AreLastModifiedTimesTheSame(oldLastModSection.InnerHtml, newLastModSection.InnerHtml))
+							{
+								// Update existing item
+								vehicleWikiPage.Save($"{filePath}", Encoding.UTF8);
+								RecordUpdateFileInLocalWiki(vehicleName, fileName, fileType.ToString());
+							}
+						}
+						// Add the item if the existing one has no last modified time
+						else if (oldLastModSection == null)
 						{
 							// Update existing item
 							vehicleWikiPage.Save($"{filePath}", Encoding.UTF8);
 							RecordUpdateFileInLocalWiki(vehicleName, fileName, fileType.ToString());
 						}
+						else
+						{
+							throw new InvalidOperationException($"Unable to find the '{ConfigurationManager.AppSettings["LastModifiedSectionId"]}' section, information comparision failed. Most likely the ID of the last modified section has changed.");
+						}
 					}
-					// Add the item if the existing one has no last modified time
-					else if (oldLastModSection == null)
+				}
+				// Handle JSON files
+				else if (fileType == LocalWikiFileTypeEnum.JSON)
+				{
+					GroundVehicle groundVehicle = (GroundVehicle)vehicle;
+					string vehicleJson = Newtonsoft.Json.JsonConvert.SerializeObject(groundVehicle, Newtonsoft.Json.Formatting.Indented);
+
+					if (!File.Exists(filePath))
 					{
-						// Overwrite old item
-						vehicleWikiPage.Save($"{filePath}", Encoding.UTF8);
-						RecordUpdateFileInLocalWiki(vehicleName, fileName, fileType.ToString());
+						// Add new item
+						File.WriteAllText(filePath, vehicleJson);
+						RecordAddFileToLocalWiki(vehicleName, fileName, fileType.ToString());
 					}
 					else
 					{
-						throw new InvalidOperationException($"Unable to find the '{ConfigurationManager.AppSettings["LastModifiedSectionId"]}' section, information comparision failed. Most likely the ID of the last modified section has changed.");
-					}
-				}
-			}
-			// Handle JSON files
-			else if(fileType == LocalWikiFileTypeEnum.JSON)
-			{
-				GroundVehicle groundVehicle = (GroundVehicle)vehicle;
-				string vehicleJson = Newtonsoft.Json.JsonConvert.SerializeObject(groundVehicle, Newtonsoft.Json.Formatting.Indented);
+						string existingFileText = File.ReadAllText(filePath);
+						GroundVehicle existingVehicle = Newtonsoft.Json.JsonConvert.DeserializeObject<GroundVehicle>(existingFileText);
 
-				if (!File.Exists(filePath))
-				{
-					// Add new item
-					File.WriteAllText(filePath, vehicleJson);
-					RecordAddFileToLocalWiki(vehicleName, fileName, fileType.ToString());
-				}
-				else
-				{
-					string existingFileText = File.ReadAllText(filePath);
-					GroundVehicle existingVehicle = Newtonsoft.Json.JsonConvert.DeserializeObject<GroundVehicle>(existingFileText);
+						// Get out the last modified times for comparison
+						string newLastModSection = groundVehicle.LastModified;
+						string oldLastModSection = existingVehicle?.LastModified;
 
-					// Get out the last modified times for comparison
-					string newLastModSection = groundVehicle.LastModified;
-					string oldLastModSection = existingVehicle?.LastModified;
-
-					// If both files have a last modified time
-					if (newLastModSection != null && oldLastModSection != null)
-					{
-						if (!AreLastModifiedTimesTheSame(oldLastModSection, newLastModSection))
+						// If both files have a last modified time
+						if (newLastModSection != null && oldLastModSection != null)
 						{
-							// Update existing
+							if (!AreLastModifiedTimesTheSame(oldLastModSection, newLastModSection))
+							{
+								// Update existing
+								File.WriteAllText(filePath, vehicleJson);
+								RecordUpdateFileInLocalWiki(vehicleName, fileName, fileType.ToString());
+							}
+						}
+						// Add the item if the existing one has no last modified time
+						else if (oldLastModSection == null)
+						{
+							// Update existing item
 							File.WriteAllText(filePath, vehicleJson);
 							RecordUpdateFileInLocalWiki(vehicleName, fileName, fileType.ToString());
 						}
-					}
-					// Add the item if the existing one has no last modified time
-					else if (oldLastModSection == null)
-					{
-						// Overwrite old item
-						vehicleWikiPage.Save($"{filePath}", Encoding.UTF8);
-						RecordUpdateFileInLocalWiki(vehicleName, fileName, fileType.ToString());
-					}
-					else
-					{
-						throw new InvalidOperationException($"Unable to find the '{ConfigurationManager.AppSettings["LastModifiedSectionId"]}' section, information comparision failed.");
+						else
+						{
+							throw new InvalidOperationException($"Unable to find the '{ConfigurationManager.AppSettings["LastModifiedSectionId"]}' section, information comparision failed.");
+						}
 					}
 				}
+			}
+			catch(Exception ex)
+			{
+				Console.WriteLine(ex);
 			}
 		}
 
