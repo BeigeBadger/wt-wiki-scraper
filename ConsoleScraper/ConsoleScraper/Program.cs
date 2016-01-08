@@ -16,6 +16,9 @@ namespace ConsoleScraper
 {
 	/*
 		TODO: Make config parameters for constants eg path, whether to make local files, whether to run against the local repo etc
+		TODO: Make Excel file
+		TODO: Make options for user prompts
+		TODO: Support AirForces
 	*/
 
 	class Program
@@ -303,31 +306,7 @@ namespace ConsoleScraper
 
 						Console.WriteLine($"The following values were found for {vehicleName}");
 
-						// Traverse the info box and pull out all of the attribute title and value pairs
-						foreach (HtmlNode row in rows)
-						{
-							HtmlNodeCollection cells = row.SelectNodes("td");
-
-							string rowTitle = cells.First().SelectNodes("b").Single().InnerText.Trim();
-							string rowValue = cells.Last().InnerText.Trim();
-
-							vehicleAttributes.Add(rowTitle, rowValue);
-
-							Console.ForegroundColor = ConsoleColor.DarkGreen;
-							Console.WriteLine($"{rowTitle}: {rowValue}");
-
-							if (propertyTotals.ContainsKey(rowTitle))
-							{
-								int currentCount;
-								propertyTotals.TryGetValue(rowTitle, out currentCount);
-
-								propertyTotals[rowTitle] = currentCount + 1;
-							}
-							else
-							{
-								propertyTotals.Add(rowTitle, 1);
-							}
-						}
+						GetAttributesFromInfoBox(vehicleAttributes, rows);
 
 						Console.ResetColor();
 
@@ -456,6 +435,41 @@ namespace ConsoleScraper
 			catch (Exception ex)
 			{
 				Console.WriteLine(ex);
+			}
+		}
+
+		/// <summary>
+		/// Extracts the key, value pairs from the info box and store them
+		/// so that they can be used later on to populate vehicle details
+		/// </summary>
+		/// <param name="vehicleAttributes">The dictionary to store the key, value pairs in</param>
+		/// <param name="rows">The table rows to process and extract the key, value pairs from</param>
+		private static void GetAttributesFromInfoBox(Dictionary<string, string> vehicleAttributes, HtmlNodeCollection rows)
+		{
+			// Traverse the info box and pull out all of the attribute title and value pairs
+			foreach (HtmlNode row in rows)
+			{
+				HtmlNodeCollection cells = row.SelectNodes("td");
+
+				string rowTitle = cells.First().SelectNodes("b").Single().InnerText.Trim();
+				string rowValue = cells.Last().InnerText.Trim();
+
+				vehicleAttributes.Add(rowTitle, rowValue);
+
+				Console.ForegroundColor = ConsoleColor.DarkGreen;
+				Console.WriteLine($"{rowTitle}: {rowValue}");
+
+				if (propertyTotals.ContainsKey(rowTitle))
+				{
+					int currentCount;
+					propertyTotals.TryGetValue(rowTitle, out currentCount);
+
+					propertyTotals[rowTitle] = currentCount + 1;
+				}
+				else
+				{
+					propertyTotals.Add(rowTitle, 1);
+				}
 			}
 		}
 
