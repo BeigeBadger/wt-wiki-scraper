@@ -16,7 +16,6 @@ using OfficeOpenXml;
 namespace ConsoleScraper
 {
 	/*
-		TODO: Make config parameters for constants eg path, whether to make local files, whether to run against the local repo etc
 		TODO: Make options for user prompts
 		TODO: Support AirForces
 	*/
