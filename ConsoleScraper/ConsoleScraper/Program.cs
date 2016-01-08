@@ -18,6 +18,7 @@ namespace ConsoleScraper
 	/*
 		TODO: Make options for user prompts
 		TODO: Support AirForces
+		TODO: Support running against local files
 	*/
 
 	class Program
