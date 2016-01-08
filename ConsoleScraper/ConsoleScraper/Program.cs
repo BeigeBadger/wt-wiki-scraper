@@ -152,7 +152,9 @@ namespace ConsoleScraper
 						Console.WriteLine();
 						Console.WriteLine("The following changes were made to the local wiki files: ");
 
-						foreach(string change in localFileChanges.Values)
+						Dictionary<string, string> orderedLocalFileChanges = localFileChanges.OrderBy(x => x.Key).ToDictionary(d => d.Key, d => d.Value);
+
+						foreach(string change in orderedLocalFileChanges.Values)
 						{
 							Console.WriteLine(change);
 						}
@@ -723,8 +725,7 @@ namespace ConsoleScraper
 		private static void RecordAddFileToLocalWiki(string vehicleName, string fileName, string fileType)
 		{
 			// Record addition of new item
-			// TODO: Change key to include the vehicle name so that the file type that calls this second (HTML) doesn't get excluded due to duplicate key restraint
-			localFileChanges.TryAdd(vehicleName, $"New vehicle '{fileName}' {fileType} file added to local wiki");
+			localFileChanges.TryAdd($"{vehicleName}: {fileType}", $"New vehicle '{fileName}' {fileType} file added to local wiki");
 			Console.WriteLine($"New vehicle '{fileName}' {fileType} file added to local wiki");
 		}
 
@@ -737,8 +738,7 @@ namespace ConsoleScraper
 		private static void RecordUpdateFileInLocalWiki(string vehicleName, string fileName, string fileType)
 		{
 			// Record update of existing item
-			// TODO: Change key to include the vehicle name so that the file type that calls this second (HTML) doesn't get excluded due to duplicate key restraint
-			localFileChanges.TryAdd(vehicleName, $"Vehicle '{fileName}' {fileType} file updated in local wiki");
+			localFileChanges.TryAdd($"{vehicleName}: {fileType}", $"Vehicle '{fileName}' {fileType} file updated in local wiki");
 			Console.WriteLine($"Vehicle '{fileName}' {fileType} file updated in local wiki");
 		}
 	}
