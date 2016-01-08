@@ -9,6 +9,7 @@ using System.Collections.Concurrent;
 using System.Threading.Tasks;
 using System.IO;
 using System.Text;
+using System.Configuration;
 using ConsoleScraper.Enums;
 
 namespace ConsoleScraper
@@ -19,16 +20,6 @@ namespace ConsoleScraper
 
 	class Program
 	{
-		// Constants that should be moved into app.config
-		public static bool UpdateLocalHtml = true;
-		public static bool UpdateLocalJson = true;
-
-		public static string BaseWikiUrl = "http://wiki.warthunder.com/";
-		public static string GroundForcesWikiUrl = $"{BaseWikiUrl}index.php?title=Category:Ground_vehicles";
-		public static string LastModifiedSectionId = "footer-info-lastmod";
-		public static string LocalWikiHtmlPath = @"..\..\LocalWiki\HTML\";
-		public static string LocalWikiJsonPath = @"..\..\LocalWiki\JSON\";
-
 		// Helper objects
 		public static VehicleCostUnitHelper vehicleCostUnitHelper = new VehicleCostUnitHelper();
 		public static VehicleSpeedUnitHelper vehicleSpeedUnitHelper = new VehicleSpeedUnitHelper();
@@ -65,7 +56,7 @@ namespace ConsoleScraper
 				HtmlWeb webGet = new HtmlWeb();
 
 				// Load Wiki Home page
-				HtmlDocument groundForcesWikiHomePage = webGet.Load(GroundForcesWikiUrl);
+				HtmlDocument groundForcesWikiHomePage = webGet.Load(ConfigurationManager.AppSettings["GroundForcesWikiUrl"]);
 
 				// Fail fast if there are errors
 				if (groundForcesWikiHomePage.ParseErrors != null && groundForcesWikiHomePage.ParseErrors.Any())
@@ -217,7 +208,7 @@ namespace ConsoleScraper
 			if(nextPageLink != null)
 			{
 				// Build the link for the next page
-				Uri subsequentWikPage = new Uri(new Uri(BaseWikiUrl), nextPageLink.Attributes["href"].Value);
+				Uri subsequentWikPage = new Uri(new Uri(ConfigurationManager.AppSettings["BaseWikiUrl"]), nextPageLink.Attributes["href"].Value);
 				string subsequentPageUrl = System.Net.WebUtility.HtmlDecode(subsequentWikPage.ToString());
 
 				// Load Wiki page
@@ -244,7 +235,7 @@ namespace ConsoleScraper
 				// Fetch page information
 				HtmlNode linkNode = vehiclePageLink.Value;
 				string wikiRelativeUrl = linkNode.Attributes.Single(l => l.Name == "href").Value;
-				string vehicleWikiEntryFullUrl = new Uri(new Uri(BaseWikiUrl), wikiRelativeUrl).ToString();
+				string vehicleWikiEntryFullUrl = new Uri(new Uri(ConfigurationManager.AppSettings["BaseWikiUrl"]), wikiRelativeUrl).ToString();
 				string vehicleName = linkNode.InnerText;
 
 				Console.WriteLine();
@@ -410,7 +401,7 @@ namespace ConsoleScraper
 
 						// Last modified
 						HtmlNode lastModifiedSection =
-							vehicleWikiPage.DocumentNode.Descendants().SingleOrDefault(x => x.Id == LastModifiedSectionId);
+							vehicleWikiPage.DocumentNode.Descendants().SingleOrDefault(x => x.Id == ConfigurationManager.AppSettings["LastModifiedSectionId"]);
 						string lastModified = lastModifiedSection?.InnerHtml;
 
 						// Populate objects
@@ -438,12 +429,12 @@ namespace ConsoleScraper
 						};
 
 						// Update the local storage if requested
-						if (UpdateLocalJson)
+						if (ConfigurationManager.AppSettings["UpdateLocalJson"] == "True")
 						{
 							UpdateLocalStorageForOfflineUse(vehicleWikiPage, vehicleName, LocalWikiFileTypeEnum.JSON, groundVehicle);
 						}
 
-						if(UpdateLocalHtml)
+						if(ConfigurationManager.AppSettings["UpdateLocalHtml"]== "True")
 						{
 							UpdateLocalStorageForOfflineUse(vehicleWikiPage, vehicleName, LocalWikiFileTypeEnum.HTML, null);
 						}
@@ -480,7 +471,7 @@ namespace ConsoleScraper
 
 			// Build vars that will be used for the local file
 			string fileName = RemoveInvalidCharacters(vehicleName.Replace(' ', '_').Replace('/', '-'));
-			string folderPath = fileType == LocalWikiFileTypeEnum.HTML ? LocalWikiHtmlPath : LocalWikiJsonPath;
+			string folderPath = fileType == LocalWikiFileTypeEnum.HTML ? ConfigurationManager.AppSettings["LocalWikiHtmlPath"] : ConfigurationManager.AppSettings["LocalWikiJsonPath"];
 			string filePath = $@"{folderPath}{fileName}.{fileType.ToString().ToLower()}";
 
 			if (!Directory.Exists(folderPath))
@@ -505,8 +496,8 @@ namespace ConsoleScraper
 					htmlDoc.DocumentNode.AppendChild(existingHtml);
 
 					// Get out the last modified times for comparison
-					var newLastModSection = vehicleWikiPage.DocumentNode.Descendants().SingleOrDefault(x => x.Id == LastModifiedSectionId);
-					var oldLastModSection = existingHtml.OwnerDocument.DocumentNode.Descendants().SingleOrDefault(x => x.Id == LastModifiedSectionId);
+					var newLastModSection = vehicleWikiPage.DocumentNode.Descendants().SingleOrDefault(x => x.Id == ConfigurationManager.AppSettings["LastModifiedSectionId"]);
+					var oldLastModSection = existingHtml.OwnerDocument.DocumentNode.Descendants().SingleOrDefault(x => x.Id == ConfigurationManager.AppSettings["LastModifiedSectionId"]);
 
 					// If both files have a last modified time
 					if (newLastModSection != null && oldLastModSection != null)
@@ -528,7 +519,7 @@ namespace ConsoleScraper
 					}
 					else
 					{
-						throw new InvalidOperationException($"Unable to find the '{LastModifiedSectionId}' section, information comparision failed. Most likely the ID of the last modified section has changed.");
+						throw new InvalidOperationException($"Unable to find the '{ConfigurationManager.AppSettings["LastModifiedSectionId"]}' section, information comparision failed. Most likely the ID of the last modified section has changed.");
 					}
 				}
 			}
@@ -572,8 +563,8 @@ namespace ConsoleScraper
 					}
 					else
 					{
-						throw new InvalidOperationException($"Unable to find the '{LastModifiedSectionId}' section, information comparision failed.");
-					}
+						throw new InvalidOperationException($"Unable to find the '{ConfigurationManager.AppSettings["LastModifiedSectionId"]}' section, information comparision failed.");
+                    }
 				}
 			}
 		}
