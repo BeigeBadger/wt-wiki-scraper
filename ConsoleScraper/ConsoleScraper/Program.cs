@@ -17,7 +17,6 @@ namespace ConsoleScraper
 {
 	/*
 		TODO: Make config parameters for constants eg path, whether to make local files, whether to run against the local repo etc
-		TODO: Make Excel file
 		TODO: Make options for user prompts
 		TODO: Support AirForces
 	*/
@@ -441,11 +440,6 @@ namespace ConsoleScraper
 							UpdateLocalStorageForOfflineUse(vehicleWikiPage, vehicleName, LocalWikiFileTypeEnum.HTML, null);
 						}
 
-						if (ConfigurationManager.AppSettings["UpdateExcelDocument"] == "True")
-						{
-							AddGroundVehicleRowToSpreadsheet(groundVehicle, worksheet);
-						}
-
 						//WikiEntry entry = new WikiEntry(vehicleName, vehicleWikiEntryFullUrl, VehicleTypeEnum.Ground, vehicleInfo);
 
 						// Add the found information to the master list
@@ -462,6 +456,11 @@ namespace ConsoleScraper
 
 				if (ConfigurationManager.AppSettings["UpdateExcelDocument"] == "True")
 				{
+					foreach(GroundVehicle groundVehicle in vehicleDetails.Values)
+					{
+						AddGroundVehicleRowToSpreadsheet(groundVehicle, worksheet);
+					}
+
 					// Make columns fit content then save the file
 					worksheet.Cells["A1:S1"].AutoFitColumns();
 					excelPackage.Save();
