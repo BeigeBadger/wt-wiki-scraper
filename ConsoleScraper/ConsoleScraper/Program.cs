@@ -270,26 +270,6 @@ namespace ConsoleScraper
 		{
 			try
 			{
-				// Setup objects to handle creating the spreadsheet
-				FileInfo excelFile = ConfigurationManager.AppSettings["UpdateExcelDocument"] == "True"
-					? new FileInfo($"{ConfigurationManager.AppSettings["LocalWikiExcelPath"]}GroundVehicleData.xlsx")
-					: null;
-				ExcelPackage excelPackage = ConfigurationManager.AppSettings["UpdateExcelDocument"] == "True"
-					? new ExcelPackage(excelFile)
-					: null;
-				ExcelWorksheet worksheet = ConfigurationManager.AppSettings["UpdateExcelDocument"] == "True"
-					? excelPackage.Workbook.Worksheets.FirstOrDefault() == null
-						? excelPackage.Workbook.Worksheets.Add("Data")
-						: excelPackage.Workbook.Worksheets.Single(w => w.Name == "Data")
-					: null;
-
-				if (ConfigurationManager.AppSettings["UpdateExcelDocument"] == "True")
-				{
-					// Clear out old data before populating the headers again
-					worksheet.DeleteColumn(1, 30);
-					CreateGroundVehicleSpreadsheetHeaders(worksheet);
-				}
-
 				foreach (string vehicleWikiPageLinkTitle in vehicleWikiPagesContent.Keys)
 				{
 					// Page to traverse
@@ -458,6 +438,24 @@ namespace ConsoleScraper
 
 				if (ConfigurationManager.AppSettings["UpdateExcelDocument"] == "True")
 				{
+					// Setup objects to handle creating the spreadsheet
+					FileInfo excelFile = ConfigurationManager.AppSettings["UpdateExcelDocument"] == "True"
+						? new FileInfo($"{ConfigurationManager.AppSettings["LocalWikiExcelPath"]}GroundVehicleData.xlsx")
+						: null;
+					ExcelPackage excelPackage = ConfigurationManager.AppSettings["UpdateExcelDocument"] == "True"
+						? new ExcelPackage(excelFile)
+						: null;
+					ExcelWorksheet worksheet = ConfigurationManager.AppSettings["UpdateExcelDocument"] == "True"
+						? excelPackage.Workbook.Worksheets.FirstOrDefault() == null
+							? excelPackage.Workbook.Worksheets.Add("Data")
+							: excelPackage.Workbook.Worksheets.Single(w => w.Name == "Data")
+						: null;
+
+					// Clear out old data before populating the headers again
+					worksheet.DeleteColumn(1, 30);
+					CreateGroundVehicleSpreadsheetHeaders(worksheet);
+
+					// Populate spreadsheet
 					Dictionary<string, GroundVehicle> orderedGroundVehicles = vehicleDetails.OrderBy(x => x.Key).ToDictionary(d => d.Key, d => d.Value);
 
 					foreach (GroundVehicle groundVehicle in orderedGroundVehicles.Values)
