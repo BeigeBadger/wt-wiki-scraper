@@ -299,11 +299,13 @@ namespace ConsoleScraper
 					// Get the div that holds the content on the RHS of the page where the information table is | document.getElementById('bodyContent').getElementsByClassName('right-area')
 					HtmlNode rightHandContent =
 						wikiBody.Descendants("div")
-							.Single(d => d.Attributes["class"] != null && d.Attributes["class"].Value.Contains("right-area"));
+							.SingleOrDefault(d => d.Attributes["class"] != null && d.Attributes["class"].Value.Contains("right-area"));
 					// Get the able that holds all of the vehicle information | document.getElementsByClassName('flight-parameters')[0]
 					HtmlNode infoBox =
-						rightHandContent.Descendants("table")
-							.SingleOrDefault(d => d.Attributes["class"].Value.Contains("flight-parameters"));
+						rightHandContent != null
+						? rightHandContent.Descendants("table")
+							.SingleOrDefault(d => d.Attributes["class"].Value.Contains("flight-parameters"))
+						: null;
 
 					// Name
 					string vehicleName = RemoveInvalidCharacters(System.Net.WebUtility.HtmlDecode(vehicleWikiPageLinkTitle));
