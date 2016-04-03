@@ -19,6 +19,7 @@ namespace ConsoleScraper
 		TODO: Make options for user prompts
 		TODO: Support AirForces
 		TODO: Support running against local files
+		TODO: Log errors to text file as this is more user friendly for copying and pasting etc
 	*/
 
 	class Program
@@ -298,14 +299,11 @@ namespace ConsoleScraper
 					// Get the div that holds all of the content under the title section | document.getElementById('bodyContent')
 					HtmlNode wikiBody = vehicleWikiPage.DocumentNode.Descendants().Single(d => d.Id == "bodyContent");
 					// Get the div that holds the content on the RHS of the page where the information table is | document.getElementById('bodyContent').getElementsByClassName('right-area')
-					HtmlNode rightHandContent =
-						wikiBody.Descendants("div")
-							.SingleOrDefault(d => d.Attributes["class"] != null && d.Attributes["class"].Value.Contains("right-area"));
+					HtmlNode rightHandContent = wikiBody.Descendants("div").SingleOrDefault(d => d.Attributes["class"] != null && d.Attributes["class"].Value.Contains("right-area"));
+
 					// Get the able that holds all of the vehicle information | document.getElementsByClassName('flight-parameters')[0]
-					HtmlNode infoBox =
-						rightHandContent != null
-						? rightHandContent.Descendants("table")
-							.SingleOrDefault(d => d.Attributes["class"].Value.Contains("flight-parameters"))
+					HtmlNode infoBox = rightHandContent != null
+						? rightHandContent.Descendants("table").SingleOrDefault(d => d.Attributes["class"].Value.Contains("flight-parameters"))
 						: null;
 
 					// Name
@@ -350,8 +348,7 @@ namespace ConsoleScraper
 						string weightRawValue = vehicleAttributes.Single(k => k.Key == "Weight").Value.ToString();
 						int weightWithoutUnits = int.Parse(Regex.Match(weightRawValue, @"\d+").Value);
 						string weightUnitsAbbreviation = (Regex.Matches(weightRawValue, @"\D+").Cast<Match>()).Last().Value.Trim();
-						VehicleWeightUnitHelper vehicleWeightUnit =
-							vehicleWeightUnitHelper.GetWeightUnitFromAbbreviation(weightUnitsAbbreviation);
+						VehicleWeightUnitHelper vehicleWeightUnit = vehicleWeightUnitHelper.GetWeightUnitFromAbbreviation(weightUnitsAbbreviation);
 
 						// Vehicle class
 						string typeRawValue = vehicleAttributes.Single(k => k.Key == "Type").Value.ToString();
@@ -368,10 +365,8 @@ namespace ConsoleScraper
 						// Engine power
 						string enginePowerRawValue = vehicleAttributes.Single(k => k.Key == "Engine power").Value.ToString();
 						int enginePowerWithoutUnits = int.Parse(Regex.Match(enginePowerRawValue, @"\d+").Value);
-						string enginePowerUnitsAbbreviation =
-							(Regex.Matches(enginePowerRawValue, @"\D+").Cast<Match>()).Last().Value.Trim();
-						VehicleEnginePowerUnitHelper vehicleEngineUnit =
-							vehicleEnginePowerUnitHelper.GetEngineUnitFromAbbreviation(enginePowerUnitsAbbreviation);
+						string enginePowerUnitsAbbreviation = (Regex.Matches(enginePowerRawValue, @"\D+").Cast<Match>()).Last().Value.Trim();
+						VehicleEnginePowerUnitHelper vehicleEngineUnit = vehicleEnginePowerUnitHelper.GetEngineUnitFromAbbreviation(enginePowerUnitsAbbreviation);
 
 						// Max speed
 						string maxSpeedRawValue = vehicleAttributes.Single(k => k.Key == "Max speed").Value.ToString();
@@ -384,8 +379,7 @@ namespace ConsoleScraper
 						string vehicleHullArmourThickness = hullArmourRawValue;
 
 						// Superstructure armour
-						string superstructureArmourRawValue =
-							vehicleAttributes.Single(k => k.Key == "Superstructure armour thickness").Value.ToString();
+						string superstructureArmourRawValue = vehicleAttributes.Single(k => k.Key == "Superstructure armour thickness").Value.ToString();
 						string vehicleSuperstructureArmourThickness = superstructureArmourRawValue;
 
 						// Repair time
@@ -407,12 +401,10 @@ namespace ConsoleScraper
 						string purchaseCostWithoutUnits = Regex.Match(purchaseCostRawValue, @"\d+").Value;
 						string purchaseCostUnits = (Regex.Matches(purchaseCostRawValue, @"\D+").Cast<Match>()).Last().Value.Trim();
 						long vehiclePurchaseCost = long.Parse(purchaseCostWithoutUnits);
-						VehicleCostUnitHelper vehiclePurchaseCostUnit =
-							vehicleCostUnitHelper.GetCostUnitFromAbbreviation(purchaseCostUnits);
+						VehicleCostUnitHelper vehiclePurchaseCostUnit = vehicleCostUnitHelper.GetCostUnitFromAbbreviation(purchaseCostUnits);
 
 						// Last modified
-						HtmlNode lastModifiedSection =
-							vehicleWikiPage.DocumentNode.Descendants().SingleOrDefault(x => x.Id == ConfigurationManager.AppSettings["LastModifiedSectionId"]);
+						HtmlNode lastModifiedSection = vehicleWikiPage.DocumentNode.Descendants().SingleOrDefault(x => x.Id == ConfigurationManager.AppSettings["LastModifiedSectionId"]);
 						string lastModified = lastModifiedSection?.InnerHtml;
 
 						// Populate objects
