@@ -115,7 +115,7 @@ namespace ConsoleScraper
 					int indexPosition = 1;
 
 					// Extract information from the pages we've traversed
-					ProcessWikiHtmlFiles(indexPosition, totalNumberOfLinksBasedOnPageText);
+					ProcessWikiHtmlFiles(indexPosition, totalNumberOfLinksBasedOnPageText, vehicleWikiEntryLinks);
 
 					processingStopwatch.Stop();
 
@@ -264,7 +264,8 @@ namespace ConsoleScraper
 		/// </summary>
 		/// <param name="indexPosition">The current index we are up to processing - used for error messages</param>
 		/// <param name="expectedNumberOfLinks">The expected number of links to process</param>
-		private static void ProcessWikiHtmlFiles(int indexPosition, int expectedNumberOfLinks)
+		/// <paran name="vehicleWikiEntryLinks">List that holds the anchor nodes of the relative urls to each vehicle page</paran>
+		private static void ProcessWikiHtmlFiles(int indexPosition, int expectedNumberOfLinks, List<HtmlNode> vehicleWikiEntryLinks)
 		{
 			try
 			{
@@ -310,6 +311,13 @@ namespace ConsoleScraper
 					// Name
 					string vehicleName = RemoveInvalidCharacters(System.Net.WebUtility.HtmlDecode(vehicleWikiPageLinkTitle));
 
+					// Link
+					HtmlNode urlNode = vehicleWikiEntryLinks.SingleOrDefault(v => v.InnerText.Equals(vehicleName));
+					string relativeUrl = urlNode != null
+						? urlNode.Attributes["href"].Value.ToString()
+						: "";
+					string vehicleWikiEntryFullUrl = new Uri(new Uri(ConfigurationManager.AppSettings["BaseWikiUrl"]), relativeUrl).ToString();
+
 					// Fail fast and create error if there is no info box
 					if (infoBox == null)
 					{
@@ -318,7 +326,7 @@ namespace ConsoleScraper
 						Console.WriteLine();
 						Console.ResetColor();
 
-						errorList.Add($"No Information found for '{vehicleName}', proceeding to next vehicle");
+						errorList.Add($"No Information found for '{vehicleName}' - {vehicleWikiEntryFullUrl}");
 						indexPosition++;
 						continue;
 					}
