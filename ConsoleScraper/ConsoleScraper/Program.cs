@@ -128,9 +128,15 @@ namespace ConsoleScraper
 						Console.ForegroundColor = ConsoleColor.Red;
 						Console.WriteLine($"The following error{(errorList.Count() > 1 ? "s were" : "was")} encountered:");
 
-						foreach (string error in errorList)
+						string errorFilePath = $"{ConfigurationManager.AppSettings["LocalWikiRootPath"].ToString()}Errors.txt";
+
+						using (StreamWriter streamWriter = File.CreateText(errorFilePath))
 						{
-							Console.WriteLine(error);
+							foreach (string error in errorList)
+							{
+								Console.WriteLine(error);
+								streamWriter.WriteLine(error);
+							}
 						}
 					}
 
@@ -154,9 +160,15 @@ namespace ConsoleScraper
 
 						Dictionary<string, string> orderedLocalFileChanges = localFileChanges.OrderBy(x => x.Key).ToDictionary(d => d.Key, d => d.Value);
 
-						foreach(string change in orderedLocalFileChanges.Values)
+						string localChangesFilePath = $"{ConfigurationManager.AppSettings["LocalWikiRootPath"].ToString()}Changes.txt";
+
+						using (StreamWriter streamWriter = File.CreateText(localChangesFilePath))
 						{
-							Console.WriteLine(change);
+							foreach (string change in orderedLocalFileChanges.Values)
+							{
+								Console.WriteLine(change);
+								streamWriter.WriteLine(change);
+							}
 						}
 					}
 				}
@@ -417,7 +429,7 @@ namespace ConsoleScraper
 							UpdateLocalStorageForOfflineUse(vehicleWikiPage, vehicleName, LocalWikiFileTypeEnum.JSON, groundVehicle);
 						}
 
-						if(ConfigurationManager.AppSettings["UpdateLocalHtml"]== "True")
+						if(ConfigurationManager.AppSettings["UpdateLocalHtml"] == "True")
 						{
 							UpdateLocalStorageForOfflineUse(vehicleWikiPage, vehicleName, LocalWikiFileTypeEnum.HTML, null);
 						}
