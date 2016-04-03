@@ -19,7 +19,6 @@ namespace ConsoleScraper
 		TODO: Make options for user prompts
 		TODO: Support AirForces
 		TODO: Support running against local files
-		TODO: Log errors to text file as this is more user friendly for copying and pasting etc
 	*/
 
 	class Program
