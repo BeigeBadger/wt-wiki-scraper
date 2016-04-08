@@ -41,6 +41,10 @@ namespace ConsoleScraper
 		// Populated with the vehicle name and vehicle objects
 		public static Dictionary<string, GroundVehicle> vehicleDetails = new Dictionary<string, GroundVehicle>();
 
+		public static bool CreateJsonFiles = true;
+		public static bool CreateHtmlFiles = true;
+		public static bool CreateExcelFile = true;
+
 		#region Debugging helpers
 
 		public static Stopwatch overallStopwatch = new Stopwatch();
@@ -55,6 +59,14 @@ namespace ConsoleScraper
 			try
 			{
 				overallStopwatch.Start();
+
+				Console.ForegroundColor = ConsoleColor.Green;
+				Console.WriteLine($"War Thunder Wiki Scraper v{FileVersionInfo.GetVersionInfo(System.Reflection.Assembly.GetEntryAssembly().Location).FileVersion}");
+				Console.WriteLine("================================================================");
+				Console.ResetColor();
+
+				Console.WriteLine("");
+				Console.ReadLine();
 
 				HtmlWeb webGet = new HtmlWeb();
 
@@ -80,7 +92,7 @@ namespace ConsoleScraper
 					// Setup initial vars
 					int totalNumberOfLinksBasedOnPageText = 0;
 					int totalNumberOfLinksBasedOnDomTraversal = 0;
-					List <HtmlNode> vehicleWikiEntryLinks = new List<HtmlNode>();
+					List<HtmlNode> vehicleWikiEntryLinks = new List<HtmlNode>();
 
 					GetLinksToVehiclePages(vehicleWikiEntryLinks, groundForcesWikiHomePage, out totalNumberOfLinksBasedOnPageText, out totalNumberOfLinksBasedOnDomTraversal);
 
@@ -110,6 +122,41 @@ namespace ConsoleScraper
 					Task.WaitAll(webCrawlerTasks);
 
 					webCrawlerStopwatch.Stop();
+
+					Console.WriteLine("");
+					Console.WriteLine("================================================================");
+					Console.WriteLine("");
+
+					Console.ForegroundColor = ConsoleColor.Yellow;
+					Console.WriteLine("Would you like to create JSON files for each vehicle locally? Enter Y [default] or N.");
+					Console.ResetColor();
+
+					CreateJsonFiles = Console.ReadKey().Key == ConsoleKey.Y
+						? true
+						: false;
+
+					Console.WriteLine("");
+
+					Console.ForegroundColor = ConsoleColor.Yellow;
+					Console.WriteLine("Would you like to create HTML files for each vehicle locally? Enter Y [default] or N.");
+					Console.ResetColor();
+
+					CreateHtmlFiles = Console.ReadKey().Key == ConsoleKey.Y
+						? true
+						: false;
+
+					Console.WriteLine("");
+
+					Console.ForegroundColor = ConsoleColor.Yellow;
+					Console.WriteLine("Would you like to create an Excel file with all of the vehicle data? Enter Y [default] or N.");
+					Console.ResetColor();
+
+					CreateExcelFile = Console.ReadKey().Key == ConsoleKey.Y
+						? true
+						: false;
+
+					Console.WriteLine("");
+
 					processingStopwatch.Start();
 
 					int indexPosition = 1;
@@ -152,7 +199,7 @@ namespace ConsoleScraper
 					Console.WriteLine($"Vehicle objects created: {vehicleDetails.Count()} (should be Actual - Errors)");
 
 					// Write out local file changes
-					if(localFileChanges.Any())
+					if (localFileChanges.Any())
 					{
 						Console.WriteLine();
 						Console.WriteLine("The following changes were made to the local wiki files: ");
@@ -222,7 +269,7 @@ namespace ConsoleScraper
 			// Get vehicle links from the subsequent pages | <a href="/index.php?title=Category:Ground_vehicles&amp;pagefrom=T-54+mod.+1949#mw-pages" title="Category:Ground vehicles">next 200</a> | document.querySelectorAll('#mw-pages a[Title="Category:Ground vehicles"]')[0]
 			HtmlNode nextPageLink = listContainerNode.Descendants("a").Where(d => d.InnerText.Contains("next") && d.Attributes["title"].Value.Contains("Category:Ground vehicles")).FirstOrDefault();
 
-			if(nextPageLink != null)
+			if (nextPageLink != null)
 			{
 				// Build the link for the next page
 				Uri subsequentWikPage = new Uri(new Uri(ConfigurationManager.AppSettings["BaseWikiUrl"]), nextPageLink.Attributes["href"].Value);
@@ -423,12 +470,12 @@ namespace ConsoleScraper
 						};
 
 						// Update the local storage if requested
-						if (ConfigurationManager.AppSettings["UpdateLocalJson"] == "True")
+						if (CreateJsonFiles)
 						{
 							UpdateLocalStorageForOfflineUse(vehicleWikiPage, vehicleName, LocalWikiFileTypeEnum.JSON, groundVehicle);
 						}
 
-						if(ConfigurationManager.AppSettings["UpdateLocalHtml"] == "True")
+						if (CreateHtmlFiles)
 						{
 							UpdateLocalStorageForOfflineUse(vehicleWikiPage, vehicleName, LocalWikiFileTypeEnum.HTML, null);
 						}
@@ -447,20 +494,14 @@ namespace ConsoleScraper
 					indexPosition++;
 				}
 
-				if (ConfigurationManager.AppSettings["UpdateExcelDocument"] == "True")
+				if (CreateExcelFile)
 				{
 					// Setup objects to handle creating the spreadsheet
-					FileInfo excelFile = ConfigurationManager.AppSettings["UpdateExcelDocument"] == "True"
-						? new FileInfo($"{ConfigurationManager.AppSettings["LocalWikiExcelPath"]}GroundVehicleData.xlsx")
-						: null;
-					ExcelPackage excelPackage = ConfigurationManager.AppSettings["UpdateExcelDocument"] == "True"
-						? new ExcelPackage(excelFile)
-						: null;
-					ExcelWorksheet worksheet = ConfigurationManager.AppSettings["UpdateExcelDocument"] == "True"
-						? excelPackage.Workbook.Worksheets.FirstOrDefault() == null
-							? excelPackage.Workbook.Worksheets.Add("Data")
-							: excelPackage.Workbook.Worksheets.Single(w => w.Name == "Data")
-						: null;
+					FileInfo excelFile = new FileInfo($"{ConfigurationManager.AppSettings["LocalWikiExcelPath"]}GroundVehicleData.xlsx");
+					ExcelPackage excelPackage = new ExcelPackage(excelFile);
+					ExcelWorksheet worksheet = excelPackage.Workbook.Worksheets.FirstOrDefault() == null
+						? excelPackage.Workbook.Worksheets.Add("Data")
+						: excelPackage.Workbook.Worksheets.Single(w => w.Name == "Data");
 
 					// Clear out old data before populating the headers again
 					worksheet.DeleteColumn(1, 30);
@@ -696,7 +737,7 @@ namespace ConsoleScraper
 					}
 				}
 			}
-			catch(Exception ex)
+			catch (Exception ex)
 			{
 				Console.WriteLine(ex);
 			}
