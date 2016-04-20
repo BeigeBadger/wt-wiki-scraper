@@ -57,6 +57,8 @@
     <Compile Include="Enums\VehicleCostUnitEnum.cs" />
     <Compile Include="Enums\VehicleEnginePowerUnitEnum.cs" />
     <Compile Include="Enums\VehicleSpeedUnitEnum.cs" />
+    <Compile Include="IConsoleManager.cs" />
+    <Compile Include="ILogger.cs" />
     <Compile Include="Models\AviationVehicle.cs" />
     <Compile Include="Enums\AviationVehicleTypeEnum.cs" />
     <Compile Include="Enums\CountryEnum.cs" />

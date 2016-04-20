@@ -40,6 +40,10 @@ namespace ConsoleScraper
 		// Populated with the vehicle name and vehicle objects
 		public static Dictionary<string, GroundVehicle> vehicleDetails = new Dictionary<string, GroundVehicle>();
 
+		public static ConsoleManager ConsoleManager;
+
+		private static string _currentApplicationVersion = FileVersionInfo.GetVersionInfo(System.Reflection.Assembly.GetEntryAssembly().Location).FileVersion;
+
 		public static bool CreateJsonFiles = true;
 		public static bool CreateHtmlFiles = true;
 		public static bool CreateExcelFile = true;
@@ -57,20 +61,18 @@ namespace ConsoleScraper
 
 		static void Main(string[] args)
 		{
+			ConsoleManager = new ConsoleManager();
+
 			try
 			{
 				overallStopwatch.Start();
 
-				WriteLineInColour(ConsoleColor.Green, $"War Thunder Wiki Scraper v{FileVersionInfo.GetVersionInfo(System.Reflection.Assembly.GetEntryAssembly().Location).FileVersion}");
-				Console.WriteLine("================================================================");
-
-				Console.WriteLine();
-				Console.WriteLine("Blurb goes here...");
-				Console.WriteLine();
-
-				WriteLineInColour(ConsoleColor.Yellow, "Press ENTER to begin.");
-				WaitUntilKeyIsPressed(ConsoleKey.Enter);
-				Console.WriteLine();
+				ConsoleManager.WriteLineInColour(ConsoleColor.Green, $"War Thunder Wiki Scraper v{_currentApplicationVersion}");
+				ConsoleManager.WriteHorizontalSeparator();
+				ConsoleManager.WritePaddedText("Blurb goes here...");
+				ConsoleManager.WriteLineInColour(ConsoleColor.Yellow, "Press ENTER to begin.");
+				ConsoleManager.WaitUntilKeyIsPressed(ConsoleKey.Enter);
+				ConsoleManager.WriteBlankLine();
 
 				HtmlWeb webGet = new HtmlWeb();
 
@@ -80,15 +82,15 @@ namespace ConsoleScraper
 				// Fail fast if there are errors
 				if (groundForcesWikiHomePage.ParseErrors != null && groundForcesWikiHomePage.ParseErrors.Any())
 				{
-					WriteLineInColour(ConsoleColor.Red, "The following errors were encountered:", false);
-					Console.WriteLine();
+					ConsoleManager.WriteLineInColour(ConsoleColor.Red, "The following errors were encountered:", false);
+					ConsoleManager.WriteBlankLine();
 
 					foreach (HtmlParseError error in groundForcesWikiHomePage.ParseErrors)
 					{
-						Console.WriteLine(error.Reason);
+						ConsoleManager.WriteTextLine(error.Reason);
 					}
 
-					Console.ResetColor();
+					ConsoleManager.ResetConsoleTextColour();
 				}
 				else
 				{
@@ -100,8 +102,8 @@ namespace ConsoleScraper
 					webCrawlerStopwatch.Start();
 
 					// This is outside of the method because of the recursive call and we don't want the user having to press enter more than once
-					WriteLineInColour(ConsoleColor.Yellow, "Press ENTER to begin searching for links to vehicle pages.");
-					WaitUntilKeyIsPressed(ConsoleKey.Enter);
+					ConsoleManager.WriteLineInColour(ConsoleColor.Yellow, "Press ENTER to begin searching for links to vehicle pages.");
+					ConsoleManager.WaitUntilKeyIsPressed(ConsoleKey.Enter);
 
 					GetLinksToVehiclePages(vehicleWikiEntryLinks, groundForcesWikiHomePage, out totalNumberOfLinksBasedOnPageText, out totalNumberOfLinksBasedOnDomTraversal);
 
@@ -132,43 +134,42 @@ namespace ConsoleScraper
 					// Wait until we have crawled all of the pages
 					Task.WaitAll(webCrawlerTasks);
 
-					Console.WriteLine();
-					Console.WriteLine("Finished extracting html documents from vehicle pages.");
+					ConsoleManager.WritePaddedText("Finished extracting html documents from vehicle pages.");
 
 					pageHtmlRetrievalStopwatch.Stop();
 
-					AddHorizontalSeparator();
-					WriteLineInColour(ConsoleColor.Yellow, "Would you like to create JSON files for each vehicle locally? Enter Y [default] or N.");
+					ConsoleManager.WriteHorizontalSeparator();
+					ConsoleManager.WriteLineInColour(ConsoleColor.Yellow, "Would you like to create JSON files for each vehicle locally? Enter Y [default] or N.");
 					
-					CreateJsonFiles = IsPressedKeyExpectedKey(ConsoleKey.Y);
-					WriteLineInColour(ConsoleColor.Green, $"Will{(CreateJsonFiles ? " " : " not ")}create JSON files.");
+					CreateJsonFiles = ConsoleManager.IsPressedKeyExpectedKey(ConsoleKey.Y);
+					ConsoleManager.WriteLineInColour(ConsoleColor.Green, $"Will{(CreateJsonFiles ? " " : " not ")}create JSON files.");
 
-					Console.WriteLine();
-					WriteLineInColour(ConsoleColor.Yellow, "Would you like to create HTML files for each vehicle locally? Enter Y [default] or N.");
+					ConsoleManager.WriteBlankLine();
+					ConsoleManager.WriteLineInColour(ConsoleColor.Yellow, "Would you like to create HTML files for each vehicle locally? Enter Y [default] or N.");
 
-					CreateHtmlFiles = IsPressedKeyExpectedKey(ConsoleKey.Y);
-					WriteLineInColour(ConsoleColor.Green, $"Will{(CreateHtmlFiles ? " " : " not ")}create HTML files.");
+					CreateHtmlFiles = ConsoleManager.IsPressedKeyExpectedKey(ConsoleKey.Y);
+					ConsoleManager.WriteLineInColour(ConsoleColor.Green, $"Will{(CreateHtmlFiles ? " " : " not ")}create HTML files.");
 
-					Console.WriteLine();
-					WriteLineInColour(ConsoleColor.Yellow, "Would you like to create an Excel file with all of the vehicle data? Enter Y [default] or N.");
+					ConsoleManager.WriteBlankLine();
+					ConsoleManager.WriteLineInColour(ConsoleColor.Yellow, "Would you like to create an Excel file with all of the vehicle data? Enter Y [default] or N.");
 
-					CreateExcelFile = IsPressedKeyExpectedKey(ConsoleKey.Y);
-					WriteLineInColour(ConsoleColor.Green, $"Will{(CreateExcelFile ? " " : "not")}create Excel file.");
-					Console.WriteLine();
+					CreateExcelFile = ConsoleManager.IsPressedKeyExpectedKey(ConsoleKey.Y);
+					ConsoleManager.WriteLineInColour(ConsoleColor.Green, $"Will{(CreateExcelFile ? " " : "not")}create Excel file.");
+					ConsoleManager.WriteBlankLine();
 
 					int indexPosition = 1;
 
 					// Extract information from the pages we've traversed
 					ProcessWikiHtmlFiles(indexPosition, totalNumberOfLinksBasedOnPageText, vehicleWikiEntryLinks);
 
-					Console.WriteLine();
-					WriteLineInColour(ConsoleColor.Green, $"Finished processing html files for vehicle data{(CreateExcelFile || CreateHtmlFiles || CreateJsonFiles ? " and writing local changes." : ".")}");
+					ConsoleManager.WriteBlankLine();
+					ConsoleManager.WriteLineInColour(ConsoleColor.Green, $"Finished processing html files for vehicle data{(CreateExcelFile || CreateHtmlFiles || CreateJsonFiles ? " and writing local changes." : ".")}");
 
 					// Write out local file changes
 					if (localFileChanges.Any())
 					{
-						Console.WriteLine();
-						Console.WriteLine("The following changes were made to the local wiki files: ");
+						ConsoleManager.WriteBlankLine();
+						ConsoleManager.WriteTextLine("The following changes were made to the local wiki files: ");
 
 						Dictionary<string, string> orderedLocalFileChanges = localFileChanges.OrderBy(x => x.Key).ToDictionary(d => d.Key, d => d.Value);
 
@@ -178,18 +179,18 @@ namespace ConsoleScraper
 						{
 							foreach (string change in orderedLocalFileChanges.Values)
 							{
-								Console.WriteLine(change);
+								ConsoleManager.WriteTextLine(change);
 								streamWriter.WriteLine(change);
 							}
 						}
 					}
 
-					AddHorizontalSeparator();
+					ConsoleManager.WriteHorizontalSeparator();
 
 					// Write out errors
 					if (errorList.Any())
 					{
-						WriteLineInColour(ConsoleColor.Red, $"The following error{(errorList.Count() > 1 ? "s were" : "was")} encountered:", false);
+						ConsoleManager.WriteLineInColour(ConsoleColor.Red, $"The following error{(errorList.Count() > 1 ? "s were" : "was")} encountered:", false);
 
 						string errorFilePath = $"{ConfigurationManager.AppSettings["LocalWikiRootPath"].ToString()}Errors.txt";
 
@@ -197,35 +198,36 @@ namespace ConsoleScraper
 						{
 							foreach (string error in errorList)
 							{
-								Console.WriteLine(error);
+								ConsoleManager.WriteTextLine(error);
 								streamWriter.WriteLine(error);
 							}
 						}
 
-						Console.ResetColor();
+						ConsoleManager.ResetConsoleTextColour();
 					}
 
-					AddHorizontalSeparator();
+					ConsoleManager.WriteHorizontalSeparator();
 
 					overallStopwatch.Stop();
 
 					// Write out summary
 					TimeSpan timeSpan = overallStopwatch.Elapsed;
-					Console.WriteLine($"Completed in {timeSpan.Hours:00}:{timeSpan.Minutes:00}:{timeSpan.Seconds:00}");
-					Console.WriteLine($"Expected total: {totalNumberOfLinksBasedOnPageText}, Actual total: {totalNumberOfLinksBasedOnDomTraversal}");
-					Console.WriteLine($"Vehicle objects created: {vehicleDetails.Count()} (should be Actual - Errors)");					
+					ConsoleManager.WriteTextLine($"Completed in {timeSpan.Hours:00}:{timeSpan.Minutes:00}:{timeSpan.Seconds:00}");
+					ConsoleManager.WriteTextLine($"Expected total: {totalNumberOfLinksBasedOnPageText}, Actual total: {totalNumberOfLinksBasedOnDomTraversal}");
+					ConsoleManager.WriteTextLine($"Vehicle objects created: {vehicleDetails.Count()} (should be Actual - Errors)");
 				}
 
 				// Wait until the user hits 'Esc' to terminate the application
-				Console.WriteLine();
-				Console.WriteLine("Press ESC to exit...");
+				ConsoleManager.WriteBlankLine();
+				ConsoleManager.WriteTextLine("Press ESC to exit...");
 
-				WaitUntilKeyIsPressed(ConsoleKey.Escape);
+				ConsoleManager.WaitUntilKeyIsPressed(ConsoleKey.Escape);
 			}
 			catch (Exception ex)
 			{
-				Console.WriteLine($"The following exception was encounted: {ex.Message}");
-				Console.WriteLine($"Exception details: {ex.StackTrace}");
+				ConsoleManager.WriteLineInColour(ConsoleColor.Red, $"The following exception was encounted: {ex.Message}", false);
+				ConsoleManager.WritePaddedText($"Exception details: {ex.StackTrace}");
+				ConsoleManager.ResetConsoleTextColour();
 			}
 		}
 
@@ -273,8 +275,8 @@ namespace ConsoleScraper
 			}
 			else
 			{
-				Console.WriteLine();
-				WriteLineInColour(ConsoleColor.Green, "Finished retrieving links to vehicle pages.");
+				ConsoleManager.WriteBlankLine();
+				ConsoleManager.WriteLineInColour(ConsoleColor.Green, "Finished retrieving links to vehicle pages.");
 			}
 		}
 
@@ -296,9 +298,9 @@ namespace ConsoleScraper
 				string vehicleWikiEntryFullUrl = new Uri(new Uri(ConfigurationManager.AppSettings["BaseWikiUrl"]), wikiRelativeUrl).ToString();
 				string vehicleName = linkNode.InnerText;
 
-				Console.WriteLine();
-				Console.WriteLine($"Processing... {vehicleName}");
-				Console.WriteLine($"Vehicle: {vehicleName}, Url: {vehicleWikiEntryFullUrl}");
+				ConsoleManager.WriteBlankLine();
+				ConsoleManager.WriteTextLine($"Processing... {vehicleName}");
+				ConsoleManager.WriteTextLine($"Vehicle: {vehicleName}, Url: {vehicleWikiEntryFullUrl}");
 
 				// Visit page and extract data
 				HtmlWeb vehicleWebGet = new HtmlWeb();
@@ -307,7 +309,7 @@ namespace ConsoleScraper
 				// Add page to new dictionary used to extract further data
 				vehicleWikiPagesContent.TryAdd(vehicleName, vehicleWikiPage);
 
-				Console.WriteLine(vehicleWikiPagesContent.Count());
+				ConsoleManager.WriteTextLine(vehicleWikiPagesContent.Count().ToString());
 			}
 		}
 
@@ -322,8 +324,8 @@ namespace ConsoleScraper
 		{
 			try
 			{
-				WriteLineInColour(ConsoleColor.Yellow, "Press ENTER to begin extracting data from the vehicle pages.");
-				WaitUntilKeyIsPressed(ConsoleKey.Enter);
+				ConsoleManager.WriteLineInColour(ConsoleColor.Yellow, "Press ENTER to begin extracting data from the vehicle pages.");
+				ConsoleManager.WaitUntilKeyIsPressed(ConsoleKey.Enter);
 
 				processingStopwatch.Start();
 
@@ -356,12 +358,12 @@ namespace ConsoleScraper
 					// Fail fast and create error if there is no info box
 					if (infoBox == null)
 					{
-						WriteLineInColour(ConsoleColor.Red, $"Error processing item {indexPosition} of {expectedNumberOfLinks}", false);
-						Console.WriteLine();
+						ConsoleManager.WriteLineInColour(ConsoleColor.Red, $"Error processing item {indexPosition} of {expectedNumberOfLinks}", false);
+						ConsoleManager.WriteBlankLine();
 
 						errorList.Add($"No Information found for '{vehicleName}' - {vehicleWikiEntryFullUrl}");
 
-						Console.ResetColor();
+						ConsoleManager.ResetConsoleTextColour();
 						indexPosition++;
 						continue;
 					}
@@ -371,11 +373,11 @@ namespace ConsoleScraper
 						Dictionary<string, string> vehicleAttributes = new Dictionary<string, string>();
 						HtmlNodeCollection rows = infoBox.SelectNodes("tr");
 
-						Console.WriteLine($"The following values were found for {vehicleName}");
+						ConsoleManager.WriteTextLine($"The following values were found for {vehicleName}");
 
 						GetAttributesFromInfoBox(vehicleAttributes, rows);
 
-						Console.ResetColor();
+						ConsoleManager.ResetConsoleTextColour();
 
 						// Country
 						string countryRawValue = vehicleAttributes.Single(k => k.Key == "Country").Value.ToString();
@@ -484,8 +486,8 @@ namespace ConsoleScraper
 						// Add the found information to the master list
 						vehicleDetails.Add(vehicleName, groundVehicle);
 
-						WriteLineInColour(ConsoleColor.Green, $"Processed item {indexPosition} of {expectedNumberOfLinks} successfully");
-						Console.WriteLine();
+						ConsoleManager.WriteLineInColour(ConsoleColor.Green, $"Processed item {indexPosition} of {expectedNumberOfLinks} successfully");
+						ConsoleManager.WriteBlankLine();
 					}
 
 					indexPosition++;
@@ -521,7 +523,7 @@ namespace ConsoleScraper
 			}
 			catch (Exception ex)
 			{
-				Console.WriteLine(ex);
+				ConsoleManager.WriteException(ex.Message);
 			}
 		}
 
@@ -608,8 +610,7 @@ namespace ConsoleScraper
 
 				vehicleAttributes.Add(rowTitle, rowValue);
 
-				Console.ForegroundColor = ConsoleColor.DarkGreen;
-				Console.WriteLine($"{rowTitle}: {rowValue}");
+				ConsoleManager.WriteLineInColour(ConsoleColor.DarkGreen, $"{rowTitle}: {rowValue}");
 
 				if (propertyTotals.ContainsKey(rowTitle))
 				{
@@ -687,7 +688,10 @@ namespace ConsoleScraper
 						}
 						else
 						{
-							throw new InvalidOperationException($"Unable to find the '{ConfigurationManager.AppSettings["LastModifiedSectionId"]}' section, information comparision failed. Most likely the ID of the last modified section has changed.");
+							string noLastModifiedSectionExceptionMessage = $"Unable to find the '{ConfigurationManager.AppSettings["LastModifiedSectionId"]}' section, information comparision failed.";
+
+							ConsoleManager.WriteException(noLastModifiedSectionExceptionMessage);
+							throw new InvalidOperationException(noLastModifiedSectionExceptionMessage);
 						}
 					}
 				}
@@ -731,14 +735,17 @@ namespace ConsoleScraper
 						}
 						else
 						{
-							throw new InvalidOperationException($"Unable to find the '{ConfigurationManager.AppSettings["LastModifiedSectionId"]}' section, information comparision failed.");
+							string noLastModifiedSectionExceptionMessage = $"Unable to find the '{ConfigurationManager.AppSettings["LastModifiedSectionId"]}' section, information comparision failed.";
+
+							ConsoleManager.WriteException(noLastModifiedSectionExceptionMessage);
+							throw new InvalidOperationException(noLastModifiedSectionExceptionMessage);
 						}
 					}
 				}
 			}
 			catch (Exception ex)
 			{
-				Console.WriteLine(ex);
+				ConsoleManager.WriteException(ex.Message);
 			}
 		}
 
@@ -778,7 +785,7 @@ namespace ConsoleScraper
 		{
 			// Record addition of new item
 			localFileChanges.TryAdd($"{vehicleName}: {fileType}", $"New vehicle '{fileName}' {fileType} file added to local wiki");
-			Console.WriteLine($"New vehicle '{fileName}' {fileType} file added to local wiki");
+			ConsoleManager.WriteTextLine($"New vehicle '{fileName}' {fileType} file added to local wiki");
 		}
 
 		/// <summary>
@@ -791,58 +798,9 @@ namespace ConsoleScraper
 		{
 			// Record update of existing item
 			localFileChanges.TryAdd($"{vehicleName}: {fileType}", $"Vehicle '{fileName}' {fileType} file updated in local wiki");
-			Console.WriteLine($"Vehicle '{fileName}' {fileType} file updated in local wiki");
+			ConsoleManager.WriteTextLine($"Vehicle '{fileName}' {fileType} file updated in local wiki");
 		}
 
-		/// <summary>
-		/// Blocks thread until the specified key is pressed
-		/// </summary>
-		/// <param name="key">Key press to wait for</param>
-		private static void WaitUntilKeyIsPressed(ConsoleKey key)
-		{
-			while (true)
-			{
-				if (Console.ReadKey(true).Key == key)
-				{
-					WriteLineInColour(ConsoleColor.Green, "Correct key acknowledged, proceeding...");
-					break;
-				}
-			}
-		}
-
-		/// <summary>
-		/// Checks the pressed to key to see if it was the expected one
-		/// </summary>
-		/// <param name="key">Key that is expected</param>
-		/// <returns>Whether or not the user input matches the expected key</returns>
-		private static bool IsPressedKeyExpectedKey(ConsoleKey key)
-		{
-			return Console.ReadKey(true).Key == key;
-		}
-
-		/// <summary>
-		/// Adds a horizontal bar to split up text sections in the console
-		/// </summary>
-		private static void AddHorizontalSeparator()
-		{
-			Console.WriteLine();
-			Console.WriteLine("================================================================");
-			Console.WriteLine();
-		}
-
-		/// <summary>
-		/// Writes the specified text in the specified colour, with option to reset the text colour after
-		/// </summary>
-		/// <param name="colour">Colour to write the text in</param>
-		/// <param name="textToWrite">The text to write</param>
-		/// <param name="resetColour">Whether or not the reset the colour after writing</param>
-		private static void WriteLineInColour(ConsoleColor colour, string textToWrite, bool resetColour = true)
-		{
-			Console.ForegroundColor = colour;
-			Console.WriteLine(textToWrite);
-
-			if (resetColour)
-				Console.ResetColor();
-		}
+		
 	}
 }
