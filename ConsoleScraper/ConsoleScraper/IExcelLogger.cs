@@ -26,7 +26,7 @@ namespace ConsoleScraper
 		/// Creates a new excel file that holds all of the details extracted from
 		/// the wiki in the location specified by the App.Config file
 		/// </summary>
-		void MakeExcelFile(Dictionary<string, GroundVehicle> vehicleDetails);
+		void CreateExcelFile(Dictionary<string, GroundVehicle> vehicleDetails);
 	}
 
 	public class ExcelLogger : IExcelLogger
@@ -91,7 +91,7 @@ namespace ConsoleScraper
 			worksheet.Cells["A1:S1"].Style.Font.Bold = true;
 		}
 
-		public void MakeExcelFile(Dictionary<string, GroundVehicle> vehicleDetails)
+		public void CreateExcelFile(Dictionary<string, GroundVehicle> vehicleDetails)
 		{
 			// Setup objects to handle creating the spreadsheet
 			FileInfo excelFile = new FileInfo($"{ConfigurationManager.AppSettings["LocalWikiExcelPath"]}GroundVehicleData.xlsx");

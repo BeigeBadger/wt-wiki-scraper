@@ -497,7 +497,7 @@ namespace ConsoleScraper
 
 				if (CreateExcelFile)
 				{
-					ExcelLogger.MakeExcelFile(vehicleDetails);
+					ExcelLogger.CreateExcelFile(vehicleDetails);
 				}
 
 				processingStopwatch.Stop();
