@@ -8,10 +8,8 @@ using System.Diagnostics;
 using System.Collections.Concurrent;
 using System.Threading.Tasks;
 using System.IO;
-using System.Text;
 using System.Configuration;
 using ConsoleScraper.Enums;
-using OfficeOpenXml;
 
 namespace ConsoleScraper
 {
@@ -42,6 +40,9 @@ namespace ConsoleScraper
 
 		public static ConsoleManager ConsoleManager;
 		public static ExcelLogger ExcelLogger;
+		public static FilePerVehicleLogger FilePerVehicleLogger;
+		public static HtmlLogger HtmlLogger;
+		public static JsonLogger JsonLogger;
 
 		private static string _currentApplicationVersion = FileVersionInfo.GetVersionInfo(System.Reflection.Assembly.GetEntryAssembly().Location).FileVersion;
 
@@ -64,6 +65,10 @@ namespace ConsoleScraper
 		{
 			ConsoleManager = new ConsoleManager();
 			ExcelLogger = new ExcelLogger();
+			FilePerVehicleLogger = new FilePerVehicleLogger(ConsoleManager);
+
+			HtmlLogger = new HtmlLogger(FilePerVehicleLogger, FilePerVehicleLogger.ConsoleManager);
+			JsonLogger = new JsonLogger(FilePerVehicleLogger, FilePerVehicleLogger.ConsoleManager);
 
 			try
 			{
@@ -565,115 +570,18 @@ namespace ConsoleScraper
 				// Handle HTML files
 				if (fileType == LocalWikiFileTypeEnum.HTML)
 				{
-					if (!File.Exists(filePath))
-					{
-						// Add new item
-						vehicleWikiPage.Save($"{filePath}", Encoding.UTF8);
-						RecordAddFileToLocalWiki(vehicleName, fileName, fileType.ToString());
-					}
-					else
-					{
-						string existingFileText = File.ReadAllText(filePath);
-
-						//Create a fake document so we can use helper methods to traverse through the existing file as an HTML document
-						HtmlDocument htmlDoc = new HtmlDocument();
-						HtmlNode existingHtml = HtmlNode.CreateNode(existingFileText);
-						htmlDoc.DocumentNode.AppendChild(existingHtml);
-
-						// Get out the last modified times for comparison
-						var newLastModSection = vehicleWikiPage.DocumentNode.Descendants().SingleOrDefault(x => x.Id == ConfigurationManager.AppSettings["LastModifiedSectionId"]);
-						var oldLastModSection = existingHtml.OwnerDocument.DocumentNode.Descendants().SingleOrDefault(x => x.Id == ConfigurationManager.AppSettings["LastModifiedSectionId"]);
-
-						// If both files have a last modified time
-						if (newLastModSection != null && oldLastModSection != null)
-						{
-							// Update the existing one if the times are different
-							if (!AreLastModifiedTimesTheSame(oldLastModSection.InnerHtml, newLastModSection.InnerHtml))
-							{
-								// Update existing item
-								vehicleWikiPage.Save($"{filePath}", Encoding.UTF8);
-								RecordUpdateFileInLocalWiki(vehicleName, fileName, fileType.ToString());
-							}
-						}
-						// Add the item if the existing one has no last modified time
-						else if (oldLastModSection == null)
-						{
-							// Update existing item
-							vehicleWikiPage.Save($"{filePath}", Encoding.UTF8);
-							RecordUpdateFileInLocalWiki(vehicleName, fileName, fileType.ToString());
-						}
-						else
-						{
-							string noLastModifiedSectionExceptionMessage = $"Unable to find the '{ConfigurationManager.AppSettings["LastModifiedSectionId"]}' section, information comparision failed.";
-
-							ConsoleManager.WriteException(noLastModifiedSectionExceptionMessage);
-							throw new InvalidOperationException(noLastModifiedSectionExceptionMessage);
-						}
-					}
+					HtmlLogger.CreateHtmlFile(localFileChanges, vehicleWikiPage, vehicleName, fileName, filePath);
 				}
 				// Handle JSON files
 				else if (fileType == LocalWikiFileTypeEnum.JSON)
 				{
-					GroundVehicle groundVehicle = (GroundVehicle)vehicle;
-					string vehicleJson = Newtonsoft.Json.JsonConvert.SerializeObject(groundVehicle, Newtonsoft.Json.Formatting.Indented);
-
-					if (!File.Exists(filePath))
-					{
-						// Add new item
-						File.WriteAllText(filePath, vehicleJson);
-						RecordAddFileToLocalWiki(vehicleName, fileName, fileType.ToString());
-					}
-					else
-					{
-						string existingFileText = File.ReadAllText(filePath);
-						GroundVehicle existingVehicle = Newtonsoft.Json.JsonConvert.DeserializeObject<GroundVehicle>(existingFileText);
-
-						// Get out the last modified times for comparison
-						string newLastModSection = groundVehicle.LastModified;
-						string oldLastModSection = existingVehicle?.LastModified;
-
-						// If both files have a last modified time
-						if (newLastModSection != null && oldLastModSection != null)
-						{
-							if (!AreLastModifiedTimesTheSame(oldLastModSection, newLastModSection))
-							{
-								// Update existing
-								File.WriteAllText(filePath, vehicleJson);
-								RecordUpdateFileInLocalWiki(vehicleName, fileName, fileType.ToString());
-							}
-						}
-						// Add the item if the existing one has no last modified time
-						else if (oldLastModSection == null)
-						{
-							// Update existing item
-							File.WriteAllText(filePath, vehicleJson);
-							RecordUpdateFileInLocalWiki(vehicleName, fileName, fileType.ToString());
-						}
-						else
-						{
-							string noLastModifiedSectionExceptionMessage = $"Unable to find the '{ConfigurationManager.AppSettings["LastModifiedSectionId"]}' section, information comparision failed.";
-
-							ConsoleManager.WriteException(noLastModifiedSectionExceptionMessage);
-							throw new InvalidOperationException(noLastModifiedSectionExceptionMessage);
-						}
-					}
+					JsonLogger.CreateJsonFile(localFileChanges, vehicleName, vehicle, fileName, filePath);
 				}
 			}
 			catch (Exception ex)
 			{
 				ConsoleManager.WriteException(ex.Message);
 			}
-		}
-
-		/// <summary>
-		/// Returns whether or not the two timestamps from the last modified section for a vehicle match
-		/// </summary>
-		/// <param name="oldLastModifiedSection">Timestamp for the older file</param>
-		/// <param name="newLastModifiedSection">Timestamp for the newer file</param>
-		/// <returns>Whether or not the timestamps match</returns>
-		private static bool AreLastModifiedTimesTheSame(string oldLastModifiedSection, string newLastModifiedSection)
-		{
-			return newLastModifiedSection == oldLastModifiedSection;
 		}
 
 		/// <summary>
@@ -690,33 +598,5 @@ namespace ConsoleScraper
 				.ToArray()
 			);
 		}
-
-		/// <summary>
-		/// Records the addition of a file to the local wiki
-		/// </summary>
-		/// <param name="vehicleName">Vehicle the file is for</param>
-		/// <param name="fileName">File name that was added</param>
-		/// <param name="fileType">File type that was added</param>
-		private static void RecordAddFileToLocalWiki(string vehicleName, string fileName, string fileType)
-		{
-			// Record addition of new item
-			localFileChanges.TryAdd($"{vehicleName}: {fileType}", $"New vehicle '{fileName}' {fileType} file added to local wiki");
-			ConsoleManager.WriteTextLine($"New vehicle '{fileName}' {fileType} file added to local wiki");
-		}
-
-		/// <summary>
-		/// Records the update of a file in the local wiki
-		/// </summary>
-		/// <param name="vehicleName">Vehicle the file is for</param>
-		/// <param name="fileName">File name that was updated</param>
-		/// <param name="fileType">File type that was updated</param>
-		private static void RecordUpdateFileInLocalWiki(string vehicleName, string fileName, string fileType)
-		{
-			// Record update of existing item
-			localFileChanges.TryAdd($"{vehicleName}: {fileType}", $"Vehicle '{fileName}' {fileType} file updated in local wiki");
-			ConsoleManager.WriteTextLine($"Vehicle '{fileName}' {fileType} file updated in local wiki");
-		}
-
-		
 	}
 }

@@ -59,6 +59,9 @@
     <Compile Include="Enums\VehicleSpeedUnitEnum.cs" />
     <Compile Include="IConsoleManager.cs" />
     <Compile Include="IExcelLogger.cs" />
+    <Compile Include="IFilePerVehicleLogger.cs" />
+    <Compile Include="IHtmlLogger.cs" />
+    <Compile Include="IJsonLogger.cs" />
     <Compile Include="ILogger.cs" />
     <Compile Include="Models\AviationVehicle.cs" />
     <Compile Include="Enums\AviationVehicleTypeEnum.cs" />
