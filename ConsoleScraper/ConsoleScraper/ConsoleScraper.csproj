@@ -58,6 +58,7 @@
     <Compile Include="Enums\VehicleEnginePowerUnitEnum.cs" />
     <Compile Include="Enums\VehicleSpeedUnitEnum.cs" />
     <Compile Include="IConsoleManager.cs" />
+    <Compile Include="IDataProcessor.cs" />
     <Compile Include="IExcelLogger.cs" />
     <Compile Include="IFilePerVehicleLogger.cs" />
     <Compile Include="IHtmlLogger.cs" />
