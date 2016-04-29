@@ -1,4 +1,10 @@
-﻿using System.Collections.Concurrent;
+﻿using ConsoleScraper.Enums;
+using ConsoleScraper.Models;
+using HtmlAgilityPack;
+using System;
+using System.Collections.Concurrent;
+using System.Configuration;
+using System.IO;
 
 namespace ConsoleScraper
 {
@@ -33,11 +39,11 @@ namespace ConsoleScraper
 
 	public class FilePerVehicleLogger : IFilePerVehicleLogger
 	{
-		public IConsoleManager ConsoleManager;
+		IConsoleManager _consoleManager;
 
 		public FilePerVehicleLogger(IConsoleManager consoleManager)
 		{
-			ConsoleManager = consoleManager;
+			_consoleManager = consoleManager;
 		}
 
 		public bool AreLastModifiedTimesTheSame(string oldLastModifiedSection, string newLastModifiedSection)
@@ -49,14 +55,14 @@ namespace ConsoleScraper
 		{
 			// Record addition of new item
 			localFileChanges.TryAdd($"{vehicleName}: {fileType}", $"New vehicle '{fileName}' {fileType} file added to local wiki");
-			ConsoleManager.WriteTextLine($"New vehicle '{fileName}' {fileType} file added to local wiki");
+			_consoleManager.WriteTextLine($"New vehicle '{fileName}' {fileType} file added to local wiki");
 		}
 
 		public void RecordUpdateFileInLocalWiki(ConcurrentDictionary<string, string> localFileChanges, string vehicleName, string fileName, string fileType)
 		{
 			// Record update of existing item
 			localFileChanges.TryAdd($"{vehicleName}: {fileType}", $"Vehicle '{fileName}' {fileType} file updated in local wiki");
-			ConsoleManager.WriteTextLine($"Vehicle '{fileName}' {fileType} file updated in local wiki");
+			_consoleManager.WriteTextLine($"Vehicle '{fileName}' {fileType} file updated in local wiki");
 		}
 	}
 }

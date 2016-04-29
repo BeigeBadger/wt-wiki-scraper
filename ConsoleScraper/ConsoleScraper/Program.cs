@@ -45,6 +45,7 @@ namespace ConsoleScraper
 		public static JsonLogger JsonLogger;
 		public static WebCrawler WebCrawler;
 		public static StringHelper StringHelper;
+		public static Logger Logger;
 
 		private static string _currentApplicationVersion = FileVersionInfo.GetVersionInfo(System.Reflection.Assembly.GetEntryAssembly().Location).FileVersion;
 
@@ -68,12 +69,12 @@ namespace ConsoleScraper
 			ExcelLogger = new ExcelLogger();
 			FilePerVehicleLogger = new FilePerVehicleLogger(ConsoleManager);
 
-			HtmlLogger = new HtmlLogger(FilePerVehicleLogger, FilePerVehicleLogger.ConsoleManager);
-			JsonLogger = new JsonLogger(FilePerVehicleLogger, FilePerVehicleLogger.ConsoleManager);
+			HtmlLogger = new HtmlLogger(FilePerVehicleLogger, ConsoleManager);
+			JsonLogger = new JsonLogger(FilePerVehicleLogger, ConsoleManager);
 
 			WebCrawler = new WebCrawler(ConsoleManager);
-
 			StringHelper = new StringHelper();
+			Logger = new Logger(JsonLogger, HtmlLogger, StringHelper, ConsoleManager);
 
 			try
 			{
@@ -403,12 +404,12 @@ namespace ConsoleScraper
 						// Update the local storage if requested
 						if (CreateJsonFiles)
 						{
-							UpdateLocalStorageForOfflineUse(vehicleWikiPage, vehicleName, LocalWikiFileTypeEnum.JSON, groundVehicle);
+							Logger.UpdateLocalStorageForOfflineUse(localFileChanges, vehicleWikiPage, vehicleName, LocalWikiFileTypeEnum.JSON, groundVehicle);
 						}
 
 						if (CreateHtmlFiles)
 						{
-							UpdateLocalStorageForOfflineUse(vehicleWikiPage, vehicleName, LocalWikiFileTypeEnum.HTML, null);
+							Logger.UpdateLocalStorageForOfflineUse(localFileChanges, vehicleWikiPage, vehicleName, LocalWikiFileTypeEnum.HTML, null);
 						}
 
 						//WikiEntry entry = new WikiEntry(vehicleName, vehicleWikiEntryFullUrl, VehicleTypeEnum.Ground, vehicleInfo);
@@ -429,43 +430,6 @@ namespace ConsoleScraper
 				}
 
 				processingStopwatch.Stop();
-			}
-			catch (Exception ex)
-			{
-				ConsoleManager.WriteException(ex.Message);
-			}
-		}
-
-		/// <summary>
-		/// Adds/updates files in the LocalWiki folder
-		/// </summary>
-		/// <param name="vehicleWikiPage">The HTML content of the wiki page</param>
-		/// <param name="vehicleName">The vehicle name of the current wiki page</param>
-		private static void UpdateLocalStorageForOfflineUse(HtmlDocument vehicleWikiPage, string vehicleName, LocalWikiFileTypeEnum fileType, IVehicle vehicle = null)
-		{
-			try
-			{
-				if (fileType == LocalWikiFileTypeEnum.Undefined)
-					throw new ArgumentException("The 'fileType' parameter for the 'UpdateLocalStorageForOfflineUse' is required but was not provided.");
-
-				// Build vars that will be used for the local file
-				string fileName = StringHelper.RemoveInvalidCharacters(vehicleName.Replace(' ', '_').Replace('/', '-'));
-				string folderPath = fileType == LocalWikiFileTypeEnum.HTML ? ConfigurationManager.AppSettings["LocalWikiHtmlPath"] : ConfigurationManager.AppSettings["LocalWikiJsonPath"];
-				string filePath = $@"{folderPath}{fileName}.{fileType.ToString().ToLower()}";
-
-				if (!Directory.Exists(folderPath))
-					Directory.CreateDirectory(folderPath);
-
-				// Handle HTML files
-				if (fileType == LocalWikiFileTypeEnum.HTML)
-				{
-					HtmlLogger.CreateHtmlFile(localFileChanges, vehicleWikiPage, vehicleName, fileName, filePath);
-				}
-				// Handle JSON files
-				else if (fileType == LocalWikiFileTypeEnum.JSON)
-				{
-					JsonLogger.CreateJsonFile(localFileChanges, vehicleName, vehicle, fileName, filePath);
-				}
 			}
 			catch (Exception ex)
 			{
