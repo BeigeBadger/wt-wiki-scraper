@@ -44,6 +44,7 @@ namespace ConsoleScraper
 		public static HtmlLogger HtmlLogger;
 		public static JsonLogger JsonLogger;
 		public static WebCrawler WebCrawler;
+		public static StringHelper StringHelper;
 
 		private static string _currentApplicationVersion = FileVersionInfo.GetVersionInfo(System.Reflection.Assembly.GetEntryAssembly().Location).FileVersion;
 
@@ -71,6 +72,8 @@ namespace ConsoleScraper
 			JsonLogger = new JsonLogger(FilePerVehicleLogger, FilePerVehicleLogger.ConsoleManager);
 
 			WebCrawler = new WebCrawler(ConsoleManager);
+
+			StringHelper = new StringHelper();
 
 			try
 			{
@@ -273,7 +276,7 @@ namespace ConsoleScraper
 						: null;
 
 					// Name
-					string vehicleName = RemoveInvalidCharacters(System.Net.WebUtility.HtmlDecode(vehicleWikiPageLinkTitle));
+					string vehicleName = StringHelper.RemoveInvalidCharacters(System.Net.WebUtility.HtmlDecode(vehicleWikiPageLinkTitle));
 
 					// Link
 					HtmlNode urlNode = vehicleWikiEntryLinks.SingleOrDefault(v => v.InnerText.Equals(vehicleName));
@@ -446,7 +449,7 @@ namespace ConsoleScraper
 					throw new ArgumentException("The 'fileType' parameter for the 'UpdateLocalStorageForOfflineUse' is required but was not provided.");
 
 				// Build vars that will be used for the local file
-				string fileName = RemoveInvalidCharacters(vehicleName.Replace(' ', '_').Replace('/', '-'));
+				string fileName = StringHelper.RemoveInvalidCharacters(vehicleName.Replace(' ', '_').Replace('/', '-'));
 				string folderPath = fileType == LocalWikiFileTypeEnum.HTML ? ConfigurationManager.AppSettings["LocalWikiHtmlPath"] : ConfigurationManager.AppSettings["LocalWikiJsonPath"];
 				string filePath = $@"{folderPath}{fileName}.{fileType.ToString().ToLower()}";
 
@@ -468,21 +471,6 @@ namespace ConsoleScraper
 			{
 				ConsoleManager.WriteException(ex.Message);
 			}
-		}
-
-		/// <summary>
-		/// Removed invalid filename characters from the provided string
-		/// </summary>
-		/// <param name="dirtyString">The string which could potentially have invalid characters in it</param>
-		/// <returns>A string which is valid for file system pathing</returns>
-		private static string RemoveInvalidCharacters(string dirtyString)
-		{
-			var invalidChars = Path.GetInvalidFileNameChars();
-
-			return new string(dirtyString
-				.Where(x => !invalidChars.Contains(x))
-				.ToArray()
-			);
 		}
 	}
 }

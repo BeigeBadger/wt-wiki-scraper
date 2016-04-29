@@ -63,6 +63,7 @@
     <Compile Include="IHtmlLogger.cs" />
     <Compile Include="IJsonLogger.cs" />
     <Compile Include="ILogger.cs" />
+    <Compile Include="IStringHelper.cs" />
     <Compile Include="IWebCrawler.cs" />
     <Compile Include="Models\AviationVehicle.cs" />
     <Compile Include="Enums\AviationVehicleTypeEnum.cs" />
