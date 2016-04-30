@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 
 namespace ConsoleScraper
 {
@@ -70,11 +71,44 @@ namespace ConsoleScraper
 		/// <param name="textToWrite">The text to write</param>
 		/// <param name="resetColour">Whether or not the reset the colour after writing</param>
 		void WriteLineInColour(ConsoleColor colour, string textToWrite, bool resetColour = true);
+
+		/// <summary>
+		/// Writes the specified text in the specified colour, followed by a blank line,
+		/// with option to reset the text colour after
+		/// </summary>
+		/// <param name="colour">Colour to write the text in</param>
+		/// <param name="textToWrite">The text to write</param>
+		/// <param name="resetColour">Whether or not the reset the colour after writing</param>
+		void WriteLineInColourFollowedByBlankLine(ConsoleColor colour, string textToWrite, bool resetColour = true);
+
+		/// <summary>
+		/// Writes the specified text in the specified colour, preceeded by a blank line,
+		/// with option to reset the text colour after
+		/// </summary>
+		/// <param name="colour">Colour to write the text in</param>
+		/// <param name="textToWrite">The text to write</param>
+		/// <param name="resetColour">Whether or not the reset the colour after writing</param>
+		void WriteLineInColourPreceededByBlankLine(ConsoleColor colour, string textToWrite, bool resetColour = true);
+
+		/// <summary>
+		/// Writes out the application name, version and the initial description of the program
+		/// </summary>
+		void WriteProgramTitleVersionAndInitialBlurb();
+
+		/// <summary>
+		/// Writes out text in the specified colour, then awaits user input
+		/// </summary>
+		/// <param name="textColour">Colour to write the text in</param>
+		/// <param name="expectedKey">The key we are expecting the user to press</param>
+		/// <param name="inputInstructions">Text to write out</param>
+		/// <returns>Whether or not the user input matches the expected key</returns>
+		void WriteInputInstructionsAndAwaitUserInput(ConsoleColor textColour, ConsoleKey expectedKey, string inputInstructions);
 	}
 
 	public class ConsoleManager : IConsoleManager
 	{
-		public const string HorizontalSeparator = "================================================================";
+		private const string _horizontalSeparator = "================================================================";
+		private string _currentApplicationVersion = FileVersionInfo.GetVersionInfo(System.Reflection.Assembly.GetEntryAssembly().Location).FileVersion;
 
 		public ConsoleManager()
 		{
@@ -117,7 +151,7 @@ namespace ConsoleScraper
 
 		public void WriteHorizontalSeparator()
 		{
-			Console.WriteLine(HorizontalSeparator);
+			Console.WriteLine(_horizontalSeparator);
 		}
 
 		public void WritePaddedHorizontalSeparator()
@@ -148,5 +182,37 @@ namespace ConsoleScraper
 				Console.ResetColor();
 		}
 
+		public void WriteLineInColourFollowedByBlankLine(ConsoleColor colour, string textToWrite, bool resetColour = true)
+		{
+			WriteLineInColour(colour, textToWrite, resetColour);
+			WriteBlankLine();
+		}
+
+		public void WriteLineInColourPreceededByBlankLine(ConsoleColor colour, string textToWrite, bool resetColour = true)
+		{
+			WriteBlankLine();
+			WriteLineInColour(colour, textToWrite, resetColour);
+		}
+
+		public void WriteProgramTitleVersionAndInitialBlurb()
+		{
+			WriteLineInColour(ConsoleColor.Green, $"War Thunder Wiki Scraper v{_currentApplicationVersion}");
+			WriteHorizontalSeparator();
+			WritePaddedText("Blurb goes here...");
+		}
+
+		public void WriteInputInstructionsAndAwaitUserInput(ConsoleColor textColour, ConsoleKey expectedKey, string inputInstructions)
+		{
+
+			WriteLineInColour(textColour, inputInstructions);
+			WaitUntilKeyIsPressed(expectedKey);
+			WriteBlankLine();
+		}
+
+		/*
+			bool isKeyPressed = IsPressedKeyExpectedKey(expectedKey);
+
+			return isKeyPressed;
+		*/
 	}
-}
+} 
