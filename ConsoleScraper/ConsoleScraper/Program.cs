@@ -204,7 +204,7 @@ namespace ConsoleScraper
 				}
 
 				// Wait until the user hits 'Esc' to terminate the application
-				ConsoleManager.WritePaddedText("Press ESC to exit...");
+				ConsoleManager.WriteLineInColour(ConsoleColor.Yellow, "Press ESC to exit...");
 				ConsoleManager.WaitUntilKeyIsPressed(ConsoleKey.Escape);
 			}
 			catch (Exception ex)
