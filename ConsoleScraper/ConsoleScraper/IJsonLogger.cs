@@ -33,7 +33,7 @@ namespace ConsoleScraper
 
 		public void CreateJsonFile(ConcurrentDictionary<string, string> localFileChanges, string vehicleName, IVehicle vehicle, string fileName, string filePath)
 		{
-			LocalWikiFileTypeEnum fileType = LocalWikiFileTypeEnum.HTML;
+			LocalWikiFileTypeEnum fileType = LocalWikiFileTypeEnum.JSON;
 			string fileExtension = fileType.ToString();
 
 			GroundVehicle groundVehicle = (GroundVehicle)vehicle;
