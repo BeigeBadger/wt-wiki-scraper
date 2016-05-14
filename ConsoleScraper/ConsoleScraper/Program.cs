@@ -163,9 +163,7 @@ namespace ConsoleScraper
 					ConsoleManager.WriteProcessingSummary(overallStopwatch.Elapsed, totalNumberOfLinksBasedOnPageText, totalNumberOfLinksFoundViaDomTraversal, vehicleDetails.Count());
 				}
 
-				// Wait until the user hits 'Esc' to terminate the application
-				ConsoleManager.WriteLineInColour(ConsoleColor.Yellow, "Press ESC to exit...");
-				ConsoleManager.WaitUntilKeyIsPressed(ConsoleKey.Escape);
+				ConsoleManager.WriteExitInstructions();
 			}
 			catch (Exception ex)
 			{

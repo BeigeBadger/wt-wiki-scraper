@@ -44,6 +44,11 @@ namespace ConsoleScraper
 		void WriteException(string exceptionMessage);
 
 		/// <summary>
+		/// Writes instructions on how to terminate the application
+		/// </summary>
+		void WriteExitInstructions();
+
+		/// <summary>
 		/// Adds a horizontal bar to split up text sections in the console
 		/// eg. ========================================================= 
 		/// works like the HTML HR tag
@@ -175,6 +180,13 @@ namespace ConsoleScraper
 			WriteLineInColour(ConsoleColor.Red, exceptionMessage);
 			WritePaddedHorizontalSeparator();
 			ResetConsoleTextColour();
+		}
+
+		public void WriteExitInstructions()
+		{
+			// Wait until the user hits 'Esc' to terminate the application
+			WriteLineInColour(ConsoleColor.Yellow, "Press ESC to exit...");
+			WaitUntilKeyIsPressed(ConsoleKey.Escape);
 		}
 
 		public void WriteHorizontalSeparator()
