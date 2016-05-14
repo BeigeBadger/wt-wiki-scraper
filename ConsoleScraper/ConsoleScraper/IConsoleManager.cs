@@ -1,10 +1,17 @@
-﻿using System;
+﻿using HtmlAgilityPack;
+using System;
 using System.Diagnostics;
 
 namespace ConsoleScraper
 {
 	public interface IConsoleManager
 	{
+		/// <summary>
+		/// Writes out any parse errors to the console
+		/// </summary>
+		/// <param name="htmlDocument">The document to handle the parse errors for</param>
+		void HandleHtmlParseErrors(HtmlDocument htmlDocument);
+
 		/// <summary>
 		/// Checks the pressed to key to see if it was the expected one
 		/// </summary>
@@ -114,6 +121,18 @@ namespace ConsoleScraper
 		{
 		}
 
+		public void HandleHtmlParseErrors(HtmlDocument htmlDocument)
+		{
+			WriteLineInColourFollowedByBlankLine(ConsoleColor.Red, "The following errors were encountered:", false);
+
+			foreach (HtmlParseError error in htmlDocument.ParseErrors)
+			{
+				WriteTextLine(error.Reason);
+			}
+
+			ResetConsoleTextColour();
+		}
+
 		public bool IsPressedKeyExpectedKey(ConsoleKey key)
 		{
 			return Console.ReadKey(true).Key == key;
@@ -208,11 +227,5 @@ namespace ConsoleScraper
 			WaitUntilKeyIsPressed(expectedKey);
 			WriteBlankLine();
 		}
-
-		/*
-			bool isKeyPressed = IsPressedKeyExpectedKey(expectedKey);
-
-			return isKeyPressed;
-		*/
 	}
 } 

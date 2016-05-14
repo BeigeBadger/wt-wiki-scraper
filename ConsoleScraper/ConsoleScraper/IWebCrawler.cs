@@ -36,6 +36,20 @@ namespace ConsoleScraper
 		/// <param name="vehiclePageLinks">A dictionary that contains a indexer for the key, and a link to the wiki page for that vehicle as the value</param>
 		/// <param name="vehicleWikiPagesContent">A dictionary that contains the vehicle name as the key and the HTML content of the page as the value</param>
 		void GetPageHtml(ConcurrentDictionary<int, HtmlNode> vehiclePageLinks, ConcurrentDictionary<string, HtmlDocument> vehicleWikiPagesContent);
+
+		/// <summary>
+		/// Gets the page using the provided URL
+		/// </summary>
+		/// <param name="url">URL to visit</param>
+		/// <returns>An HtmlDocument that represents the page for a given URL</returns>
+		HtmlDocument GetDocumentViaUrl(string url);
+
+		/// <summary>
+		/// Checks if there were any errors parsing an HtmlDocument
+		/// </summary>
+		/// <param name="document">The document to check for errors</param>
+		/// <returns>Whether there were errors parsing the provided document</returns>
+		bool DoesTheDocumentContainParseErrors(HtmlDocument document);
 	}
 
 	public class WebCrawler : IWebCrawler
@@ -142,6 +156,19 @@ namespace ConsoleScraper
 
 				_consoleManager.WriteTextLine(vehicleWikiPagesContent.Count().ToString());
 			}
+		}
+
+		public HtmlDocument GetDocumentViaUrl(string url)
+		{
+			HtmlWeb webGet = new HtmlWeb();
+
+			// Return the retrieved document
+			return webGet.Load(url);
+		}
+
+		public bool DoesTheDocumentContainParseErrors(HtmlDocument document)
+		{
+			return document.ParseErrors != null && document.ParseErrors.Any();
 		}
 	}
 }

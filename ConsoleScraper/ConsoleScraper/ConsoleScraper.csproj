@@ -61,6 +61,7 @@
     <Compile Include="IDataProcessor.cs" />
     <Compile Include="IExcelLogger.cs" />
     <Compile Include="IFilePerVehicleLogger.cs" />
+    <Compile Include="IGroundForcesScraper.cs" />
     <Compile Include="IHtmlLogger.cs" />
     <Compile Include="IJsonLogger.cs" />
     <Compile Include="ILogger.cs" />

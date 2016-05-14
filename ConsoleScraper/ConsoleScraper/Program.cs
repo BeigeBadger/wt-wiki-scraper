@@ -32,7 +32,7 @@ namespace ConsoleScraper
 		public static StringHelper StringHelper;
 		public static Logger Logger;
 		public static DataProcessor DataProcessor;
-
+		public static GroundForcesScraper GroundForcesScraper;
 
 		public static bool CreateJsonFiles = true;
 		public static bool CreateHtmlFiles = true;
@@ -58,6 +58,7 @@ namespace ConsoleScraper
 			StringHelper = new StringHelper();
 			Logger = new Logger(JsonLogger, HtmlLogger, StringHelper, ConsoleManager);
 			DataProcessor = new DataProcessor(ConsoleManager, StringHelper, WebCrawler, ExcelLogger, Logger);
+			GroundForcesScraper = new GroundForcesScraper(WebCrawler, ConsoleManager);
 
 			try
 			{
@@ -66,22 +67,14 @@ namespace ConsoleScraper
 				ConsoleManager.WriteProgramTitleVersionAndInitialBlurb();
 				ConsoleManager.WriteInputInstructionsAndAwaitUserInput(ConsoleColor.Yellow, ConsoleKey.Enter, "Press ENTER to begin.");
 
-				HtmlWeb webGet = new HtmlWeb();
-
 				// Load Wiki Home page
-				HtmlDocument groundForcesWikiHomePage = webGet.Load(ConfigurationManager.AppSettings["GroundForcesWikiUrl"]);
+				HtmlDocument groundForcesWikiHomePage = GroundForcesScraper.GetGroundForcesWikiHomePage();
+				bool parseErrorsEncountered = WebCrawler.DoesTheDocumentContainParseErrors(groundForcesWikiHomePage);
 
 				// Fail fast if there are errors
-				if (groundForcesWikiHomePage.ParseErrors != null && groundForcesWikiHomePage.ParseErrors.Any())
+				if (parseErrorsEncountered)
 				{
-					ConsoleManager.WriteLineInColourFollowedByBlankLine(ConsoleColor.Red, "The following errors were encountered:", false);
-
-					foreach (HtmlParseError error in groundForcesWikiHomePage.ParseErrors)
-					{
-						ConsoleManager.WriteTextLine(error.Reason);
-					}
-
-					ConsoleManager.ResetConsoleTextColour();
+					ConsoleManager.HandleHtmlParseErrors(groundForcesWikiHomePage);
 				}
 				else
 				{
