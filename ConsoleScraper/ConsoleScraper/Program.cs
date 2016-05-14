@@ -6,8 +6,6 @@ using ConsoleScraper.Models;
 using System.Diagnostics;
 using System.Collections.Concurrent;
 using System.Threading.Tasks;
-using System.IO;
-using System.Configuration;
 
 namespace ConsoleScraper
 {
@@ -146,54 +144,23 @@ namespace ConsoleScraper
 
 					ConsoleManager.WriteLineInColourPreceededByBlankLine(ConsoleColor.Green, $"Finished processing html files for vehicle data{(CreateExcelFile || CreateHtmlFiles || CreateJsonFiles ? " and writing local changes." : ".")}");
 
-					// Write out local file changes
 					if (localFileChanges.Any())
 					{
-						string localChangesFilePath = $"{ConfigurationManager.AppSettings["LocalWikiRootPath"].ToString()}Changes.txt";
-						Dictionary<string, string> orderedLocalFileChanges = localFileChanges.OrderBy(x => x.Key).ToDictionary(d => d.Key, d => d.Value);
-
-						ConsoleManager.WritePaddedText("The following changes were made to the local wiki files: ");
-
-						using (StreamWriter streamWriter = File.CreateText(localChangesFilePath))
-						{
-							foreach (string change in orderedLocalFileChanges.Values)
-							{
-								ConsoleManager.WriteTextLine(change);
-								streamWriter.WriteLine(change);
-							}
-						}
+						Logger.HandleLocalFileChanges(localFileChanges);
 					}
 
 					ConsoleManager.WriteHorizontalSeparator();
 
-					// Write out errors
 					if (errorsList.Any())
 					{
-						string errorFilePath = $"{ConfigurationManager.AppSettings["LocalWikiRootPath"].ToString()}Errors.txt";
-
-						ConsoleManager.WriteLineInColour(ConsoleColor.Red, $"The following error{(errorsList.Count() > 1 ? "s were" : "was")} encountered:", false);
-
-						using (StreamWriter streamWriter = File.CreateText(errorFilePath))
-						{
-							foreach (string error in errorsList)
-							{
-								ConsoleManager.WriteTextLine(error);
-								streamWriter.WriteLine(error);
-							}
-						}
-
-						ConsoleManager.ResetConsoleTextColour();
+						Logger.HandleProcessingErrors(errorsList);
 					}
 
 					ConsoleManager.WriteHorizontalSeparator();
 
 					overallStopwatch.Stop();
 
-					// Write out summary
-					TimeSpan timeSpan = overallStopwatch.Elapsed;
-					ConsoleManager.WriteTextLine($"Completed in {timeSpan.Hours:00}:{timeSpan.Minutes:00}:{timeSpan.Seconds:00}");
-					ConsoleManager.WriteTextLine($"Expected total: {totalNumberOfLinksBasedOnPageText}, Actual total: {totalNumberOfLinksFoundViaDomTraversal}");
-					ConsoleManager.WriteTextLine($"Vehicle objects created: {vehicleDetails.Count()} (should be Actual - Errors)");
+					ConsoleManager.WriteProcessingSummary(overallStopwatch.Elapsed, totalNumberOfLinksBasedOnPageText, totalNumberOfLinksFoundViaDomTraversal, vehicleDetails.Count());
 				}
 
 				// Wait until the user hits 'Esc' to terminate the application

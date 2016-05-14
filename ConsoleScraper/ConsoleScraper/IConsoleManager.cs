@@ -65,6 +65,15 @@ namespace ConsoleScraper
 		void WritePaddedText(string textToWrite);
 
 		/// <summary>
+		/// Writes out how long the program took to execute and other statistics
+		/// </summary>
+		/// <param name="runTime">How long it took to run</param>
+		/// <param name="expectedLinksTotal">The number of links we expected to find (taken from page text)</param>
+		/// <param name="foundLinksTotal">The number of links we actually found (via scraping)</param>
+		/// <param name="vehicleObjectsCreated">How many vehicle objects were created</param>
+		void WriteProcessingSummary(TimeSpan runTime, int expectedLinksTotal, int foundLinksTotal, int vehicleObjectsCreated);
+
+		/// <summary>
 		/// Will write the specified text to the console using the
 		/// inbuilt Console.WriteLine method
 		/// </summary>
@@ -185,6 +194,13 @@ namespace ConsoleScraper
 			WriteBlankLine();
 			WriteTextLine(textToWrite);
 			WriteBlankLine();
+		}
+
+		public void WriteProcessingSummary(TimeSpan runTime, int expectedLinksTotal, int foundLinksTotal, int vehicleObjectsCreated)
+		{
+			WriteTextLine($"Completed in {runTime.Hours:00}:{runTime.Minutes:00}:{runTime.Seconds:00}");
+			WriteTextLine($"Expected total: {expectedLinksTotal}, Actual total: {foundLinksTotal}");
+			WriteTextLine($"Vehicle objects created: {vehicleObjectsCreated} (should be Actual - Errors)");
 		}
 
 		public void WriteTextLine(string textToWrite)

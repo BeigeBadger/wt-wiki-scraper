@@ -3,6 +3,8 @@ using ConsoleScraper.Models;
 using HtmlAgilityPack;
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
 using System.Configuration;
 using System.IO;
 
@@ -10,6 +12,18 @@ namespace ConsoleScraper
 {
 	public interface ILogger
 	{
+		/// <summary>
+		/// Writes out any changes that were made to local files to the console and file
+		/// </summary>
+		/// <param name="localFileChanges">The list with the local file changes in it</param>
+		void HandleLocalFileChanges(ConcurrentDictionary<string, string> localFileChanges);
+
+		/// <summary>
+		/// Writes out any errors that were encountered while trying to process data
+		/// </summary>
+		/// <param name="errorsList">The list of errors to write to console and file</param>
+		void HandleProcessingErrors(List<string> errorsList);
+
 		/// <summary>
 		/// Adds/updates files in the LocalWiki folder
 		/// </summary>
@@ -32,6 +46,41 @@ namespace ConsoleScraper
 			_htmlLogger = htmlLogger;
 			_stringHelper = stringHelper;
 			_consoleManager = consoleManager;
+		}
+
+		public void HandleLocalFileChanges(ConcurrentDictionary<string, string> localFileChanges)
+		{
+			string localChangesFilePath = $"{ConfigurationManager.AppSettings["LocalWikiRootPath"].ToString()}Changes.txt";
+			Dictionary<string, string> orderedLocalFileChanges = localFileChanges.OrderBy(x => x.Key).ToDictionary(d => d.Key, d => d.Value);
+
+			_consoleManager.WritePaddedText("The following changes were made to the local wiki files: ");
+
+			using (StreamWriter streamWriter = File.CreateText(localChangesFilePath))
+			{
+				foreach (string change in orderedLocalFileChanges.Values)
+				{
+					_consoleManager.WriteTextLine(change);
+					streamWriter.WriteLine(change);
+				}
+			}
+		}
+
+		public void HandleProcessingErrors(List<string> errorsList)
+		{
+			string errorFilePath = $"{ConfigurationManager.AppSettings["LocalWikiRootPath"].ToString()}Errors.txt";
+
+			_consoleManager.WriteLineInColour(ConsoleColor.Red, $"The following error{(errorsList.Count() > 1 ? "s were" : "was")} encountered:", false);
+
+			using (StreamWriter streamWriter = File.CreateText(errorFilePath))
+			{
+				foreach (string error in errorsList)
+				{
+					_consoleManager.WriteTextLine(error);
+					streamWriter.WriteLine(error);
+				}
+			}
+
+			_consoleManager.ResetConsoleTextColour();
 		}
 
 		public void UpdateLocalStorageForOfflineUse(ConcurrentDictionary<string, string> localFileChanges, HtmlDocument vehicleWikiPage, string vehicleName, LocalWikiFileTypeEnum fileType, IVehicle vehicle = null)
