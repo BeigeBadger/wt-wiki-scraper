@@ -138,7 +138,7 @@ namespace ConsoleScraper
 					processingStopwatch.Start();
 
 					// Extract information from the pages we've traversed
-					DataProcessor.ProcessWikiHtmlFiles(vehicleWikiPagesContent, localFileChanges, vehicleDetails, vehicleWikiEntryLinks, errorsList, indexPosition, totalNumberOfLinksBasedOnPageText, CreateJsonFiles, CreateHtmlFiles, CreateExcelFile);
+					DataProcessor.ProcessGroundForcesWikiHtmlFiles(vehicleWikiPagesContent, localFileChanges, vehicleDetails, vehicleWikiEntryLinks, errorsList, indexPosition, totalNumberOfLinksBasedOnPageText, CreateJsonFiles, CreateHtmlFiles, CreateExcelFile);
 
 					processingStopwatch.Stop();
 

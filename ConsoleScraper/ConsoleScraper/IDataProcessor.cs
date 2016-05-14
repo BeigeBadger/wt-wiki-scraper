@@ -23,7 +23,7 @@ namespace ConsoleScraper
 		/// <param name="errorsList">Holds any errors that occur during execution</param>
 		/// <param name="indexPosition">The current index we are up to processing - used for error messages</param>
 		/// <param name="expectedNumberOfLinks">The expected number of links to process</param>
-		void ProcessWikiHtmlFiles(ConcurrentDictionary<string, HtmlDocument> vehicleWikiPagesContent, ConcurrentDictionary<string, string> localFileChanges, Dictionary<string, GroundVehicle> vehicleDetails, List<HtmlNode> vehicleWikiEntryLinks, List<string> errorsList, int indexPosition, int expectedNumberOfLinks, bool createJsonFiles, bool createHtmlFiles, bool createExcelFile);
+		void ProcessGroundForcesWikiHtmlFiles(ConcurrentDictionary<string, HtmlDocument> vehicleWikiPagesContent, ConcurrentDictionary<string, string> localFileChanges, Dictionary<string, GroundVehicle> vehicleDetails, List<HtmlNode> vehicleWikiEntryLinks, List<string> errorsList, int indexPosition, int expectedNumberOfLinks, bool createJsonFiles, bool createHtmlFiles, bool createExcelFile);
 	}
 
 	public class DataProcessor : IDataProcessor
@@ -51,7 +51,7 @@ namespace ConsoleScraper
 			_logger = logger;
 		}
 
-		public void ProcessWikiHtmlFiles(ConcurrentDictionary<string, HtmlDocument> vehicleWikiPagesContent, ConcurrentDictionary<string, string> localFileChanges, Dictionary<string, GroundVehicle> vehicleDetails, List<HtmlNode> vehicleWikiEntryLinks, List<string> errorsList, int indexPosition, int expectedNumberOfLinks, bool createJsonFiles, bool createHtmlFiles, bool createExcelFile)
+		public void ProcessGroundForcesWikiHtmlFiles(ConcurrentDictionary<string, HtmlDocument> vehicleWikiPagesContent, ConcurrentDictionary<string, string> localFileChanges, Dictionary<string, GroundVehicle> vehicleDetails, List<HtmlNode> vehicleWikiEntryLinks, List<string> errorsList, int indexPosition, int expectedNumberOfLinks, bool createJsonFiles, bool createHtmlFiles, bool createExcelFile)
 		{
 			try
 			{
