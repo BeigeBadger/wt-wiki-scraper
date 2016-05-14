@@ -69,7 +69,6 @@ namespace ConsoleScraper
 				HtmlDocument groundForcesWikiHomePage = GroundForcesScraper.GetGroundForcesWikiHomePage();
 				bool parseErrorsEncountered = WebCrawler.DoesTheDocumentContainParseErrors(groundForcesWikiHomePage);
 
-				// Fail fast if there are errors
 				if (parseErrorsEncountered)
 				{
 					ConsoleManager.HandleHtmlParseErrors(groundForcesWikiHomePage);
@@ -121,17 +120,7 @@ namespace ConsoleScraper
 
 					ConsoleManager.WriteHorizontalSeparator();
 
-					ConsoleManager.WriteLineInColour(ConsoleColor.Yellow, "Would you like to create JSON files for each vehicle locally? Enter Y [default] or N.");
-					CreateJsonFiles = ConsoleManager.IsPressedKeyExpectedKey(ConsoleKey.Y);
-					ConsoleManager.WriteLineInColourFollowedByBlankLine(ConsoleColor.Green, $"Will{(CreateJsonFiles ? " " : " not ")}create JSON files.");
-
-					ConsoleManager.WriteLineInColour(ConsoleColor.Yellow, "Would you like to create HTML files for each vehicle locally? Enter Y [default] or N.");
-					CreateHtmlFiles = ConsoleManager.IsPressedKeyExpectedKey(ConsoleKey.Y);
-					ConsoleManager.WriteLineInColourFollowedByBlankLine(ConsoleColor.Green, $"Will{(CreateHtmlFiles ? " " : " not ")}create HTML files.");
-
-					ConsoleManager.WriteLineInColour(ConsoleColor.Yellow, "Would you like to create an Excel file with all of the vehicle data? Enter Y [default] or N.");
-					CreateExcelFile = ConsoleManager.IsPressedKeyExpectedKey(ConsoleKey.Y);
-					ConsoleManager.WriteLineInColourFollowedByBlankLine(ConsoleColor.Green, $"Will{(CreateExcelFile ? " " : " not ")}create Excel file.");
+					ConsoleManager.HandleCreateFileTypePrompts(CreateJsonFiles, CreateHtmlFiles, CreateExcelFile);
 
 					int indexPosition = 1;
 

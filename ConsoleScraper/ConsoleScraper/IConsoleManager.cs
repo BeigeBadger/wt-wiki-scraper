@@ -7,6 +7,15 @@ namespace ConsoleScraper
 	public interface IConsoleManager
 	{
 		/// <summary>
+		/// Will ask the user a series of questions about whether they want to create
+		/// certain file types after processing the wiki data
+		/// </summary>
+		/// <param name="createJsonFiles">Initial value of whether we want to create JSON files</param>
+		/// <param name="createHtmlFiles">Initial value of whether we want to create HTML files</param>
+		/// <param name="createExcelFiles">Initial value of whether we want to create EXCEL files</param>
+		void HandleCreateFileTypePrompts(bool createJsonFiles, bool createHtmlFiles, bool createExcelFiles);
+
+		/// <summary>
 		/// Writes out any parse errors to the console
 		/// </summary>
 		/// <param name="htmlDocument">The document to handle the parse errors for</param>
@@ -133,6 +142,21 @@ namespace ConsoleScraper
 
 		public ConsoleManager()
 		{
+		}
+
+		public void HandleCreateFileTypePrompts(bool createJsonFiles, bool createHtmlFiles, bool createExcelFile)
+		{
+			WriteLineInColour(ConsoleColor.Yellow, "Would you like to create JSON files for each vehicle locally? Enter Y [default] or N.");
+			createJsonFiles = IsPressedKeyExpectedKey(ConsoleKey.Y);
+			WriteLineInColourFollowedByBlankLine(ConsoleColor.Green, $"Will{(createJsonFiles ? " " : " not ")}create JSON files.");
+
+			WriteLineInColour(ConsoleColor.Yellow, "Would you like to create HTML files for each vehicle locally? Enter Y [default] or N.");
+			createHtmlFiles = IsPressedKeyExpectedKey(ConsoleKey.Y);
+			WriteLineInColourFollowedByBlankLine(ConsoleColor.Green, $"Will{(createHtmlFiles ? " " : " not ")}create HTML files.");
+
+			WriteLineInColour(ConsoleColor.Yellow, "Would you like to create an Excel file with all of the vehicle data? Enter Y [default] or N.");
+			createExcelFile = IsPressedKeyExpectedKey(ConsoleKey.Y);
+			WriteLineInColourFollowedByBlankLine(ConsoleColor.Green, $"Will{(createExcelFile ? " " : " not ")}create Excel file.");
 		}
 
 		public void HandleHtmlParseErrors(HtmlDocument htmlDocument)
