@@ -39,9 +39,6 @@ namespace ConsoleScraper
 		#region Debugging helpers
 
 		public static Stopwatch overallStopwatch = new Stopwatch();
-		public static Stopwatch webCrawlerStopwatch = new Stopwatch();
-		public static Stopwatch pageHtmlRetrievalStopwatch = new Stopwatch();
-		public static Stopwatch processingStopwatch = new Stopwatch();
 
 		#endregion
 
@@ -67,90 +64,11 @@ namespace ConsoleScraper
 
 				// Load Wiki Home page
 				HtmlDocument groundForcesWikiHomePage = GroundForcesScraper.GetGroundForcesWikiHomePage();
-				bool parseErrorsEncountered = WebCrawler.DoesTheDocumentContainParseErrors(groundForcesWikiHomePage);
 
-				if (parseErrorsEncountered)
-				{
-					ConsoleManager.HandleHtmlParseErrors(groundForcesWikiHomePage);
-				}
-				else
-				{
-					// Setup initial vars
-					List<HtmlNode> vehicleWikiEntryLinks = new List<HtmlNode>();
-
-					webCrawlerStopwatch.Start();
-
-					// This is outside of the method because of the recursive call and we don't want the user having to press enter more than once
-					ConsoleManager.WriteInputInstructionsAndAwaitUserInput(ConsoleColor.Yellow, ConsoleKey.Enter, "Press ENTER to begin searching for links to vehicle pages.");
-
-					Dictionary<string, int> linksFound = WebCrawler.GetLinksToVehiclePages(vehicleWikiEntryLinks, groundForcesWikiHomePage);
-					int totalNumberOfLinksBasedOnPageText = linksFound.Where(l => l.Key.Equals("TotalNumberOfLinksBasedOnPageText")).Single().Value;
-					int totalNumberOfLinksFoundViaDomTraversal = linksFound.Where(l => l.Key.Equals("TotalNumberOfLinksFoundViaDomTraversal")).Single().Value;
-
-					webCrawlerStopwatch.Stop();
-
-					// Setup thread-safe collections for processing
-					ConcurrentDictionary<int, HtmlNode> linksToVehicleWikiPages = new ConcurrentDictionary<int, HtmlNode>();
-
-					// Populate the full list of links we need to traverse
-					for (int i = 0; i < vehicleWikiEntryLinks.Count(); i++)
-					{
-						HtmlNode linkNode = vehicleWikiEntryLinks[i];
-						linksToVehicleWikiPages.TryAdd(i, linkNode);
-					}
-
-					pageHtmlRetrievalStopwatch.Start();
-
-					// Crawl the pages concurrently
-					Task[] webCrawlerTasks = new Task[4]
-					{
-						// Going from 2 to 4 tasks halves the processing time, after 4 tasks the performance gain is negligible
-						Task.Factory.StartNew(() => WebCrawler.GetPageHtml(linksToVehicleWikiPages, vehicleWikiPagesContent)),
-						Task.Factory.StartNew(() => WebCrawler.GetPageHtml(linksToVehicleWikiPages, vehicleWikiPagesContent)),
-						Task.Factory.StartNew(() => WebCrawler.GetPageHtml(linksToVehicleWikiPages, vehicleWikiPagesContent)),
-						Task.Factory.StartNew(() => WebCrawler.GetPageHtml(linksToVehicleWikiPages, vehicleWikiPagesContent))
-					};
-
-					// Wait until we have crawled all of the pages
-					Task.WaitAll(webCrawlerTasks);
-
-					ConsoleManager.WritePaddedText("Finished extracting html documents from vehicle pages.");
-
-					pageHtmlRetrievalStopwatch.Stop();
-
-					ConsoleManager.WriteHorizontalSeparator();
-
-					ConsoleManager.HandleCreateFileTypePrompts(CreateJsonFiles, CreateHtmlFiles, CreateExcelFile);
-
-					int indexPosition = 1;
-
-					processingStopwatch.Start();
-
-					// Extract information from the pages we've traversed
-					DataProcessor.ProcessGroundForcesWikiHtmlFiles(vehicleWikiPagesContent, localFileChanges, vehicleDetails, vehicleWikiEntryLinks, errorsList, indexPosition, totalNumberOfLinksBasedOnPageText, CreateJsonFiles, CreateHtmlFiles, CreateExcelFile);
-
-					processingStopwatch.Stop();
-
-					ConsoleManager.WriteLineInColourPreceededByBlankLine(ConsoleColor.Green, $"Finished processing html files for vehicle data{(CreateExcelFile || CreateHtmlFiles || CreateJsonFiles ? " and writing local changes." : ".")}");
-
-					if (localFileChanges.Any())
-					{
-						Logger.HandleLocalFileChanges(localFileChanges);
-					}
-
-					ConsoleManager.WriteHorizontalSeparator();
-
-					if (errorsList.Any())
-					{
-						Logger.HandleProcessingErrors(errorsList);
-					}
-
-					ConsoleManager.WriteHorizontalSeparator();
-
-					overallStopwatch.Stop();
-
-					ConsoleManager.WriteProcessingSummary(overallStopwatch.Elapsed, totalNumberOfLinksBasedOnPageText, totalNumberOfLinksFoundViaDomTraversal, vehicleDetails.Count());
-				}
+				// Crawl ground forces
+				// TODO: Move of these parameters can be moved into DataProcessor as they aren't used againw
+				DataProcessor.CrawlWikiSectionPagesForData(groundForcesWikiHomePage, vehicleWikiPagesContent, localFileChanges, vehicleDetails, errorsList,
+					overallStopwatch, CreateJsonFiles, CreateHtmlFiles, CreateExcelFile);
 
 				ConsoleManager.WriteExitInstructions();
 			}

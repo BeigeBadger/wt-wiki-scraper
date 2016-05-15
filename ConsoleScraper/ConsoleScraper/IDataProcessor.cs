@@ -5,13 +5,33 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Configuration;
+using System.Diagnostics;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 namespace ConsoleScraper
 {
 	public interface IDataProcessor
 	{
+		/// <summary>
+		/// Finds links to all of the wiki pages for a vehicle type,
+		/// then goes through and visits each one, extracting the
+		/// data into an HtmlDocument for us in the Process method.
+		/// </summary>
+		/// <param name="wikiHomePage">The document containing the links to the vehicle wiki pages</param>
+		/// <param name="vehicleWikiPagesContent">Holds the HtmlDocuments that are retrieved</param>
+		/// <param name="localFileChanges">Holds all of the changes to local files</param>
+		/// <param name="vehicleDetails">Holds a mapping between the page title and the vehicle object with the extracted data</param>
+		/// <param name="errorsList">Holds the errors that were encountered during processing</param>
+		/// <param name="overallStopwatch">Debug only: Holds the stopwatch that is used to record the execution time</param>
+		/// <param name="createJsonFiles">Holds whether or not to create Json files as an output</param>
+		/// <param name="createHtmlFiles">Holds whether or not to create Html files as an output</param>
+		/// <param name="createExcelFile">Holds whether or not to create an Excel file as an output</param>
+		void CrawlWikiSectionPagesForData(HtmlDocument wikiHomePage, ConcurrentDictionary<string, HtmlDocument> vehicleWikiPagesContent,
+			ConcurrentDictionary<string, string> localFileChanges, Dictionary<string, GroundVehicle> vehicleDetails, List<string> errorsList,
+			Stopwatch overallStopwatch, bool createJsonFiles, bool createHtmlFiles, bool createExcelFile);
+
 		/// <summary>
 		/// Loops through all of the vehicle wiki links that have been provided, attempts to parse the parts that we are interested in -
 		/// the vehicle details table, creates an object from that, then stores the data locally if a flag is set
@@ -34,6 +54,14 @@ namespace ConsoleScraper
 		IExcelLogger _excelLogger;
 		ILogger _logger;
 
+		#region Debugging helpers
+
+		public Stopwatch webCrawlerStopwatch = new Stopwatch();
+		public Stopwatch pageHtmlRetrievalStopwatch = new Stopwatch();
+		public Stopwatch processingStopwatch = new Stopwatch();
+
+		#endregion
+
 		// Helper objects
 		VehicleCostUnitHelper _vehicleCostUnitHelper = new VehicleCostUnitHelper();
 		VehicleSpeedUnitHelper _vehicleSpeedUnitHelper = new VehicleSpeedUnitHelper();
@@ -49,6 +77,98 @@ namespace ConsoleScraper
 			_webCrawler = webCrawler;
 			_excelLogger = excelLogger;
 			_logger = logger;
+		}
+
+		// TODO: VehicleDetails will have to be changed to take an IVehicle as the value data type
+		// TODO: Pass in Enum of vehicle type to use for the processing call
+		public void CrawlWikiSectionPagesForData(HtmlDocument wikiHomePage, ConcurrentDictionary<string, HtmlDocument> vehicleWikiPagesContent,
+			ConcurrentDictionary<string, string> localFileChanges, Dictionary<string, GroundVehicle> vehicleDetails, List<string> errorsList,
+			Stopwatch overallStopwatch, bool createJsonFiles, bool createHtmlFiles, bool createExcelFile)
+		{
+			bool parseErrorsEncountered = _webCrawler.DoesTheDocumentContainParseErrors(wikiHomePage);
+
+			if (parseErrorsEncountered)
+			{
+				_consoleManager.HandleHtmlParseErrors(wikiHomePage);
+			}
+			else
+			{
+				// Setup initial vars
+				List<HtmlNode> vehicleWikiEntryLinks = new List<HtmlNode>();
+
+				webCrawlerStopwatch.Start();
+
+				// This is outside of the method because of the recursive call and we don't want the user having to press enter more than once
+				_consoleManager.WriteInputInstructionsAndAwaitUserInput(ConsoleColor.Yellow, ConsoleKey.Enter, "Press ENTER to begin searching for links to vehicle pages.");
+
+				Dictionary<string, int> linksFound = _webCrawler.GetLinksToVehiclePages(vehicleWikiEntryLinks, wikiHomePage);
+				int totalNumberOfLinksBasedOnPageText = linksFound.Where(l => l.Key.Equals("TotalNumberOfLinksBasedOnPageText")).Single().Value;
+				int totalNumberOfLinksFoundViaDomTraversal = linksFound.Where(l => l.Key.Equals("TotalNumberOfLinksFoundViaDomTraversal")).Single().Value;
+
+				webCrawlerStopwatch.Stop();
+
+				// Setup thread-safe collections for processing
+				ConcurrentDictionary<int, HtmlNode> linksToVehicleWikiPages = new ConcurrentDictionary<int, HtmlNode>();
+
+				// Populate the full list of links we need to traverse
+				for (int i = 0; i < vehicleWikiEntryLinks.Count(); i++)
+				{
+					HtmlNode linkNode = vehicleWikiEntryLinks[i];
+					linksToVehicleWikiPages.TryAdd(i, linkNode);
+				}
+
+				pageHtmlRetrievalStopwatch.Start();
+
+				// Crawl the pages concurrently
+				Task[] webCrawlerTasks = new Task[4]
+				{
+						// Going from 2 to 4 tasks halves the processing time, after 4 tasks the performance gain is negligible
+						Task.Factory.StartNew(() => _webCrawler.GetPageHtml(linksToVehicleWikiPages, vehicleWikiPagesContent)),
+						Task.Factory.StartNew(() => _webCrawler.GetPageHtml(linksToVehicleWikiPages, vehicleWikiPagesContent)),
+						Task.Factory.StartNew(() => _webCrawler.GetPageHtml(linksToVehicleWikiPages, vehicleWikiPagesContent)),
+						Task.Factory.StartNew(() => _webCrawler.GetPageHtml(linksToVehicleWikiPages, vehicleWikiPagesContent))
+				};
+
+				// Wait until we have crawled all of the pages
+				Task.WaitAll(webCrawlerTasks);
+
+				_consoleManager.WritePaddedText("Finished extracting html documents from vehicle pages.");
+
+				pageHtmlRetrievalStopwatch.Stop();
+
+				_consoleManager.WriteHorizontalSeparator();
+
+				_consoleManager.HandleCreateFileTypePrompts(createJsonFiles, createHtmlFiles, createExcelFile);
+
+				int indexPosition = 1;
+
+				processingStopwatch.Start();
+
+				// Extract information from the pages we've traversed
+				ProcessGroundForcesWikiHtmlFiles(vehicleWikiPagesContent, localFileChanges, vehicleDetails, vehicleWikiEntryLinks, errorsList, indexPosition, totalNumberOfLinksBasedOnPageText, createJsonFiles, createHtmlFiles, createExcelFile);
+
+				processingStopwatch.Stop();
+
+				_consoleManager.WriteLineInColourPreceededByBlankLine(ConsoleColor.Green, $"Finished processing html files for vehicle data{(createExcelFile || createHtmlFiles || createJsonFiles ? " and writing local changes." : ".")}");
+
+				if (localFileChanges.Any())
+				{
+					_logger.HandleLocalFileChanges(localFileChanges);
+				}
+
+				_consoleManager.WriteHorizontalSeparator();
+
+				if (errorsList.Any())
+				{
+					_logger.HandleProcessingErrors(errorsList);
+				}
+
+				_consoleManager.WriteHorizontalSeparator();
+
+				overallStopwatch.Stop();
+
+				_consoleManager.WriteProcessingSummary(overallStopwatch.Elapsed, totalNumberOfLinksBasedOnPageText, totalNumberOfLinksFoundViaDomTraversal, vehicleDetails.Count());
+			}
 		}
 
 		public void ProcessGroundForcesWikiHtmlFiles(ConcurrentDictionary<string, HtmlDocument> vehicleWikiPagesContent, ConcurrentDictionary<string, string> localFileChanges, Dictionary<string, GroundVehicle> vehicleDetails, List<HtmlNode> vehicleWikiEntryLinks, List<string> errorsList, int indexPosition, int expectedNumberOfLinks, bool createJsonFiles, bool createHtmlFiles, bool createExcelFile)
