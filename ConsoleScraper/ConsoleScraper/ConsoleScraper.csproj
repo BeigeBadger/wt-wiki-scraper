@@ -95,6 +95,10 @@
   <ItemGroup>
     <Folder Include="LocalWiki\HTML\" />
     <Folder Include="LocalWiki\JSON\" />
+    <Folder Include="RoundhousE\up\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="RoundhousE\rh.exe" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
