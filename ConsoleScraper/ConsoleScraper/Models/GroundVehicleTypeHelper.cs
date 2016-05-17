@@ -32,7 +32,7 @@ namespace ConsoleScraper.Models
 		public const string TankDestroyerFullName = "Tank destroyer";
 		public const string TankDestroyerAbbreviation = "TD";
 		public const string AntiAircraftVehicleFullName = "Self propelled anti-aircraft";
-		public const string AntiAircraftVehicleAbbreviation = "AA";
+		public const string AntiAircraftVehicleAbbreviation = "SPAA";
 
 		public GroundVehicleTypeHelper() { }
 
