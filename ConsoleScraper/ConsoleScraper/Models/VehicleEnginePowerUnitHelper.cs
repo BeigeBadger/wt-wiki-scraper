@@ -35,7 +35,7 @@ namespace ConsoleScraper.Models
 
 		public VehicleEnginePowerUnitHelper GetEngineUnitFromAbbreviation(string enginePowerUnitsAbbreviation)
 		{
-			if (enginePowerUnitsAbbreviation.Equals("h.p."))
+			if (enginePowerUnitsAbbreviation.Equals("h.p.") || enginePowerUnitsAbbreviation.Equals("hp"))
 			{
 				return new VehicleEnginePowerUnitHelper(VehicleEnginePowerUnitEnum.Horsepower, VehicleEnginePowerUnitEnum.Horsepower.ToString(), enginePowerUnitsAbbreviation);
 			}
