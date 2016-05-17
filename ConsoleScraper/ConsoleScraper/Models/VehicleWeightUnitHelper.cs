@@ -39,6 +39,10 @@ namespace ConsoleScraper.Models
 			{
 				return new VehicleWeightUnitHelper(VehicleWeightUnitEnum.Kilograms, VehicleWeightUnitEnum.Kilograms.ToString(), weightUnitsAbbreviation);
 			}
+			else if (weightUnitsAbbreviation.Equals("lb"))
+			{
+				return new VehicleWeightUnitHelper(VehicleWeightUnitEnum.Pounds, VehicleWeightUnitEnum.Pounds.ToString(), weightUnitsAbbreviation);
+			}
 
 			return new VehicleWeightUnitHelper();
 		}
