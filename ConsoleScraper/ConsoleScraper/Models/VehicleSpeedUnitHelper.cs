@@ -39,6 +39,10 @@ namespace ConsoleScraper.Models
 			{
 				return new VehicleSpeedUnitHelper(VehicleSpeedUnitEnum.KilometersPerHour, VehicleSpeedUnitEnum.KilometersPerHour.ToString(), maxSpeedUnitAbbreviation);
 			}
+			else if (maxSpeedUnitAbbreviation.Equals("mph"))
+			{
+				return new VehicleSpeedUnitHelper(VehicleSpeedUnitEnum.MilesPerHour, VehicleSpeedUnitEnum.MilesPerHour.ToString(), maxSpeedUnitAbbreviation);
+			}
 
 			return new VehicleSpeedUnitHelper();
 		}
