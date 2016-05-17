@@ -7,6 +7,9 @@
 		Germany = 2,
 		USSR = 3,
 		GreatBritain = 4,
-		Japan = 5
+		Japan = 5,
+		Italy = 6,
+		France = 7,
+		Australia = 8
 	}
 }

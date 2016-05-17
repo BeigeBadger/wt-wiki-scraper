@@ -33,11 +33,17 @@ namespace ConsoleScraper.Models
 		public const string UssrAbbreviation = "USSR";
 		public const string BritainAbbreviation = "Great Britain";
 		public const string JapanAbbreviation = "Japan";
+		public const string ItalyAbbreviation = "Italy";
+		public const string FranceAbbreviation = "France";
+		public const string AustraliaAbbreviation = "Australia";
 		public const string UsaName = "United States of America";
 		public const string GermanyName = GermanyAbbreviation;
 		public const string UssrName = UssrAbbreviation;
 		public const string BritainName = BritainAbbreviation;
 		public const string JapanName = JapanAbbreviation;
+		public const string ItalyName = ItalyAbbreviation;
+		public const string FranceName = FranceAbbreviation;
+		public const string AustraliaName = AustraliaAbbreviation;
 
 		public VehicleCountryHelper() { }
 
@@ -71,6 +77,18 @@ namespace ConsoleScraper.Models
 			{
 				return new VehicleCountryHelper(CountryEnum.Japan, CountryEnum.Japan.ToString(), JapanAbbreviation);
 			}
+			else if (countryAbbreviation.Equals(ItalyAbbreviation))
+			{
+				return new VehicleCountryHelper(CountryEnum.Italy, CountryEnum.Italy.ToString(), ItalyAbbreviation);
+			}
+			else if (countryAbbreviation.Equals(FranceAbbreviation))
+			{
+				return new VehicleCountryHelper(CountryEnum.France, CountryEnum.France.ToString(), FranceAbbreviation);
+			}
+			else if (countryAbbreviation.Equals(AustraliaAbbreviation))
+			{
+				return new VehicleCountryHelper(CountryEnum.Australia, CountryEnum.Australia.ToString(), AustraliaAbbreviation);
+			}
 
 			return new VehicleCountryHelper();
 		}
@@ -85,17 +103,29 @@ namespace ConsoleScraper.Models
 			{
 				return new VehicleCountryHelper(CountryEnum.Germany, CountryEnum.Germany.ToString(), GermanyAbbreviation);
 			}
-			else if (countryName.Equals(UssrAbbreviation))
+			else if (countryName.Equals(UssrName))
 			{
 				return new VehicleCountryHelper(CountryEnum.USSR, CountryEnum.USSR.ToString(), UssrAbbreviation);
 			}
-			else if (countryName.Equals(BritainAbbreviation))
+			else if (countryName.Equals(BritainName))
 			{
 				return new VehicleCountryHelper(CountryEnum.GreatBritain, CountryEnum.GreatBritain.ToString(), BritainAbbreviation);
 			}
-			else if (countryName.Equals(JapanAbbreviation))
+			else if (countryName.Equals(JapanName))
 			{
 				return new VehicleCountryHelper(CountryEnum.Japan, CountryEnum.Japan.ToString(), JapanAbbreviation);
+			}
+			else if (countryName.Equals(ItalyName))
+			{
+				return new VehicleCountryHelper(CountryEnum.Italy, CountryEnum.Italy.ToString(), ItalyAbbreviation);
+			}
+			else if (countryName.Equals(FranceName))
+			{
+				return new VehicleCountryHelper(CountryEnum.France, CountryEnum.France.ToString(), FranceAbbreviation);
+			}
+			else if (countryName.Equals(AustraliaName))
+			{
+				return new VehicleCountryHelper(CountryEnum.Australia, CountryEnum.Australia.ToString(), AustraliaAbbreviation);
 			}
 
 			return new VehicleCountryHelper();
