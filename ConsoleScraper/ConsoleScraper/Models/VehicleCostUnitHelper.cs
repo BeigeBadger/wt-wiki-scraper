@@ -39,6 +39,7 @@ namespace ConsoleScraper.Models
 			{
 				return new VehicleCostUnitHelper(VehicleCostUnitEnum.SilverLions, VehicleCostUnitEnum.SilverLions.ToString(), maxRepairCostUnitsAbbreviation);
 			}
+			// TODO: Add support for Golden Eagles, but these aren't used on the wiki at present, the cost just shows as 0 s.l.
 
 			return new VehicleCostUnitHelper();
 		}
