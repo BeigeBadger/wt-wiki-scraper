@@ -301,7 +301,7 @@ namespace ConsoleScraper
 							Name = vehicleName,
 							Country = vehicleCountry,
 							Weight = weightWithoutUnits,
-							VehicleType = vehicleType,
+							VehicleType = (VehicleTypeEnum)vehicleType.Id,
 							Rank = vehicleRank,
 							BattleRating = vehicleBattleRating,
 							EnginePower = enginePowerWithoutUnits,
