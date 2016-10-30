@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using HtmlAgilityPack;
 using ConsoleScraper.Models;
 using System.Diagnostics;
 using System.Collections.Concurrent;
-using System.Threading.Tasks;
 
 namespace ConsoleScraper
 {
