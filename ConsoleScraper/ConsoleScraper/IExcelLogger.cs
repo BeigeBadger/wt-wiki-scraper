@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.IO;
 using System.Linq;
+using System;
+using ConsoleScraper.Enums;
 
 namespace ConsoleScraper
 {
@@ -45,7 +47,7 @@ namespace ConsoleScraper
 				// Add values
 				worksheet.Cells[$"A{indexPosition}"].Value = groundVehicle.Name;
 				worksheet.Cells[$"B{indexPosition}"].Value = groundVehicle.Country;
-				worksheet.Cells[$"C{indexPosition}"].Value = groundVehicle.VehicleType.Name;
+				worksheet.Cells[$"C{indexPosition}"].Value = Enum.GetName(typeof(VehicleTypeEnum), groundVehicle.VehicleType);
 				worksheet.Cells[$"D{indexPosition}"].Value = groundVehicle.Rank;
 				worksheet.Cells[$"E{indexPosition}"].Value = groundVehicle.BattleRating;
 				worksheet.Cells[$"F{indexPosition}"].Value = groundVehicle.Weight;
