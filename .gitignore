@@ -247,3 +247,6 @@ ConsoleScraper/ConsoleScraper/bin/Debug/ConsoleScraper.exe
 *.pdb
 *.cache
 ConsoleScraper/ConsoleScraper/obj/Debug/ConsoleScraper.exe
+
+.vs/*
+.vscode/*
