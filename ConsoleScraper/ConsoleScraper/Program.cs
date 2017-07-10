@@ -7,13 +7,16 @@ using System.Collections.Concurrent;
 
 namespace ConsoleScraper
 {
-	class Program
+	internal class Program
 	{
 		/** Thread-safe collections **/
+
 		// Populated with the vehicle name as the key and the HTML content of the page as the value
 		public static ConcurrentDictionary<string, HtmlDocument> vehicleWikiPagesContent = new ConcurrentDictionary<string, HtmlDocument>();
+
 		// Keeps track of changes made to local files, vehicle name as the key, and the action performed as the value
 		public static ConcurrentDictionary<string, string> localFileChanges = new ConcurrentDictionary<string, string>();
+
 		// Populated with the vehicle name and vehicle objects
 		public static Dictionary<string, GroundVehicle> vehicleDetails = new Dictionary<string, GroundVehicle>();
 
@@ -38,9 +41,9 @@ namespace ConsoleScraper
 
 		public static Stopwatch overallStopwatch = new Stopwatch();
 
-		#endregion
+		#endregion Debugging helpers
 
-		static void Main(string[] args)
+		private static void Main(string[] args)
 		{
 			ConsoleManager = new ConsoleManager();
 			ExcelLogger = new ExcelLogger();
