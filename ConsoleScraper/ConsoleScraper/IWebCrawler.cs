@@ -132,8 +132,7 @@ namespace ConsoleScraper
 			foreach (var vehiclePageLink in vehiclePageLinks)
 			{
 				// Remove the current node so that the other threads don't reprocess it
-				HtmlNode tempNode;
-				vehiclePageLinks.TryRemove(vehiclePageLink.Key, out tempNode);
+				vehiclePageLinks.TryRemove(vehiclePageLink.Key, out HtmlNode tempNode);
 
 				// Fetch page information
 				HtmlNode linkNode = vehiclePageLink.Value;
