@@ -5,15 +5,19 @@ namespace ConsoleScraper.Models
 	public interface IVehicleSpeedUnitHelper
 	{
 		#region Properties
+
 		int Id { get; set; }
 		VehicleSpeedUnitEnum SpeedUnit { get; set; }
 		string Name { get; set; }
 		string Abbreviation { get; set; }
-		#endregion
+
+		#endregion Properties
 
 		#region Methods
+
 		VehicleSpeedUnitHelper GetSpeedUnitFromAbbreviation(string maxSpeedUnitAbbreviation);
-		#endregion
+
+		#endregion Methods
 	}
 
 	public class VehicleSpeedUnitHelper : IVehicleStatisticalUnit, IVehicleSpeedUnitHelper
@@ -23,9 +27,11 @@ namespace ConsoleScraper.Models
 		public string Name { get; set; }
 		public string Abbreviation { get; set; }
 
-		public VehicleSpeedUnitHelper() { }
+		public VehicleSpeedUnitHelper()
+		{
+		}
 
-		public VehicleSpeedUnitHelper(VehicleSpeedUnitEnum unitEnum, string name, string abbreviation)
+		private VehicleSpeedUnitHelper(VehicleSpeedUnitEnum unitEnum, string name, string abbreviation)
 		{
 			Id = (int)unitEnum;
 			SpeedUnit = unitEnum;
@@ -35,11 +41,12 @@ namespace ConsoleScraper.Models
 
 		public VehicleSpeedUnitHelper GetSpeedUnitFromAbbreviation(string maxSpeedUnitAbbreviation)
 		{
+			// TODO: Make switch-case
 			if (maxSpeedUnitAbbreviation.Equals("km/h"))
 			{
 				return new VehicleSpeedUnitHelper(VehicleSpeedUnitEnum.KilometersPerHour, VehicleSpeedUnitEnum.KilometersPerHour.ToString(), maxSpeedUnitAbbreviation);
 			}
-			else if (maxSpeedUnitAbbreviation.Equals("mph"))
+			if (maxSpeedUnitAbbreviation.Equals("mph"))
 			{
 				return new VehicleSpeedUnitHelper(VehicleSpeedUnitEnum.MilesPerHour, VehicleSpeedUnitEnum.MilesPerHour.ToString(), maxSpeedUnitAbbreviation);
 			}

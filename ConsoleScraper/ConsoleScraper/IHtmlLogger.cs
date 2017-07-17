@@ -1,11 +1,11 @@
 ﻿using ConsoleScraper.Enums;
 using HtmlAgilityPack;
 using System;
+using System.Collections.Concurrent;
 using System.Configuration;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Collections.Concurrent;
 
 namespace ConsoleScraper
 {
@@ -25,8 +25,8 @@ namespace ConsoleScraper
 
 	public class HtmlLogger : IHtmlLogger
 	{
-		IFilePerVehicleLogger _filePerVehicleLogger;
-		IConsoleManager _consoleManager;
+		private readonly IFilePerVehicleLogger _filePerVehicleLogger;
+		private readonly IConsoleManager _consoleManager;
 
 		public HtmlLogger(IFilePerVehicleLogger filePerVehicleLogger, IConsoleManager consoleManager)
 		{
@@ -36,7 +36,7 @@ namespace ConsoleScraper
 
 		public void CreateHtmlFile(ConcurrentDictionary<string, string> localFileChanges, HtmlDocument vehicleWikiPage, string vehicleName, string fileName, string filePath)
 		{
-			LocalWikiFileTypeEnum fileType = LocalWikiFileTypeEnum.HTML;
+			LocalWikiFileTypeEnum fileType = LocalWikiFileTypeEnum.Html;
 			string fileExtension = fileType.ToString();
 
 			if (!File.Exists(filePath))

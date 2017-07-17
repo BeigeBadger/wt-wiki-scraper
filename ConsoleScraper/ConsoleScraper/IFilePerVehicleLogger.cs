@@ -1,16 +1,10 @@
-﻿using ConsoleScraper.Enums;
-using ConsoleScraper.Models;
-using HtmlAgilityPack;
-using System;
-using System.Collections.Concurrent;
-using System.Configuration;
-using System.IO;
+﻿using System.Collections.Concurrent;
 
 namespace ConsoleScraper
 {
 	public interface IFilePerVehicleLogger
 	{
-		// <summary>
+		/// <summary>
 		/// Returns whether or not the two timestamps from the last modified section for a vehicle match
 		/// </summary>
 		/// <param name="oldLastModifiedSection">Timestamp for the older file</param>
@@ -39,7 +33,7 @@ namespace ConsoleScraper
 
 	public class FilePerVehicleLogger : IFilePerVehicleLogger
 	{
-		IConsoleManager _consoleManager;
+		private readonly IConsoleManager _consoleManager;
 
 		public FilePerVehicleLogger(IConsoleManager consoleManager)
 		{

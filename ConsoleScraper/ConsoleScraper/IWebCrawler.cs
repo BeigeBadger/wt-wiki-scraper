@@ -16,7 +16,6 @@ namespace ConsoleScraper
 		/// </summary>
 		/// <param name="vehicleAttributes">The dictionary to store the key, value pairs in</param>
 		/// <param name="rows">The table rows to process and extract the key, value pairs from</param>
-		/// <param name="rows">The table rows to process and extract the key, value pairs from</param>
 		void GetAttributesFromInfoBox(Dictionary<string, string> vehicleAttributes, HtmlNodeCollection rows);
 
 		/// <summary>
@@ -54,10 +53,10 @@ namespace ConsoleScraper
 
 	public class WebCrawler : IWebCrawler
 	{
-		IConsoleManager _consoleManager;
+		private readonly IConsoleManager _consoleManager;
 
-		int _totalNumberOfLinksBasedOnPageText;
-		int _totalNumberOfLinksFoundViaDomTraversal;
+		private int _totalNumberOfLinksBasedOnPageText;
+		private int _totalNumberOfLinksFoundViaDomTraversal;
 
 		public WebCrawler(IConsoleManager consoleManager)
 		{
@@ -98,10 +97,10 @@ namespace ConsoleScraper
 			string totalEntriesTextBlock = listContainerNode.Descendants("p").Single().InnerText;
 			MatchCollection matches = Regex.Matches(totalEntriesTextBlock, @"\d+");
 			_totalNumberOfLinksBasedOnPageText = int.Parse(matches[matches.Count - 1].Value);
-			_totalNumberOfLinksFoundViaDomTraversal = vehicleWikiEntryLinks.Count();
+			_totalNumberOfLinksFoundViaDomTraversal = vehicleWikiEntryLinks.Count;
 
 			// Get vehicle links from the subsequent pages | <a href="/index.php?title=Category:Ground_vehicles&amp;pagefrom=T-54+mod.+1949#mw-pages" title="Category:Ground vehicles">next 200</a> | document.querySelectorAll('#mw-pages a[Title="Category:Ground vehicles"]')[0]
-			HtmlNode nextPageLink = listContainerNode.Descendants("a").Where(d => d.InnerText.Contains("next") && d.Attributes["title"].Value.Contains("Category:Ground vehicles")).FirstOrDefault();
+			HtmlNode nextPageLink = listContainerNode.Descendants("a").FirstOrDefault(d => d.InnerText.Contains("next") && d.Attributes["title"].Value.Contains("Category:Ground vehicles"));
 
 			if (nextPageLink != null)
 			{
@@ -133,8 +132,7 @@ namespace ConsoleScraper
 			foreach (var vehiclePageLink in vehiclePageLinks)
 			{
 				// Remove the current node so that the other threads don't reprocess it
-				HtmlNode tempNode;
-				vehiclePageLinks.TryRemove(vehiclePageLink.Key, out tempNode);
+				vehiclePageLinks.TryRemove(vehiclePageLink.Key, out HtmlNode _);
 
 				// Fetch page information
 				HtmlNode linkNode = vehiclePageLink.Value;
@@ -154,7 +152,7 @@ namespace ConsoleScraper
 				// Add page to new dictionary used to extract further data
 				vehicleWikiPagesContent.TryAdd(vehicleName, vehicleWikiPage);
 
-				_consoleManager.WriteTextLine(vehicleWikiPagesContent.Count().ToString());
+				_consoleManager.WriteTextLine(vehicleWikiPagesContent.Count.ToString());
 			}
 		}
 

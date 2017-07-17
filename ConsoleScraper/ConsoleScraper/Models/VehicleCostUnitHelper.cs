@@ -5,15 +5,19 @@ namespace ConsoleScraper.Models
 	public interface IVehicleCostUnitHelper
 	{
 		#region Properties
+
 		int Id { get; set; }
 		VehicleCostUnitEnum CostUnit { get; set; }
 		string Name { get; set; }
 		string Abbreviation { get; set; }
-		#endregion
+
+		#endregion Properties
 
 		#region Methods
+
 		VehicleCostUnitHelper GetCostUnitFromAbbreviation(string maxRepairCostUnitsAbbreviation);
-		#endregion
+
+		#endregion Methods
 	}
 
 	public class VehicleCostUnitHelper : IVehicleStatisticalUnit, IVehicleCostUnitHelper
@@ -23,9 +27,11 @@ namespace ConsoleScraper.Models
 		public string Name { get; set; }
 		public string Abbreviation { get; set; }
 
-		public VehicleCostUnitHelper() { }
+		public VehicleCostUnitHelper()
+		{
+		}
 
-		public VehicleCostUnitHelper(VehicleCostUnitEnum unitEnum, string name, string abbreviation)
+		private VehicleCostUnitHelper(VehicleCostUnitEnum unitEnum, string name, string abbreviation)
 		{
 			Id = (int)unitEnum;
 			CostUnit = unitEnum;

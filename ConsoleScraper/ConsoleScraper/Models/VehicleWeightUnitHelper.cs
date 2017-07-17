@@ -5,15 +5,19 @@ namespace ConsoleScraper.Models
 	public interface IVehicleWeightUnitHelper
 	{
 		#region Properties
+
 		int Id { get; set; }
 		VehicleWeightUnitEnum WeightUnit { get; set; }
 		string Name { get; set; }
 		string Abbreviation { get; set; }
-		#endregion
+
+		#endregion Properties
 
 		#region Methods
+
 		VehicleWeightUnitHelper GetWeightUnitFromAbbreviation(string weightUnitsAbbreviation);
-		#endregion
+
+		#endregion Methods
 	}
 
 	public class VehicleWeightUnitHelper : IVehicleStatisticalUnit, IVehicleWeightUnitHelper
@@ -23,7 +27,9 @@ namespace ConsoleScraper.Models
 		public string Name { get; set; }
 		public string Abbreviation { get; set; }
 
-		public VehicleWeightUnitHelper() {}
+		public VehicleWeightUnitHelper()
+		{
+		}
 
 		private VehicleWeightUnitHelper(VehicleWeightUnitEnum unitEnum, string name, string abbreviation)
 		{
@@ -35,11 +41,12 @@ namespace ConsoleScraper.Models
 
 		public VehicleWeightUnitHelper GetWeightUnitFromAbbreviation(string weightUnitsAbbreviation)
 		{
-			if(weightUnitsAbbreviation.Equals("kg"))
+			// TODO: Make switch-case
+			if (weightUnitsAbbreviation.Equals("kg"))
 			{
 				return new VehicleWeightUnitHelper(VehicleWeightUnitEnum.Kilograms, VehicleWeightUnitEnum.Kilograms.ToString(), weightUnitsAbbreviation);
 			}
-			else if (weightUnitsAbbreviation.Equals("lb"))
+			if (weightUnitsAbbreviation.Equals("lb"))
 			{
 				return new VehicleWeightUnitHelper(VehicleWeightUnitEnum.Pounds, VehicleWeightUnitEnum.Pounds.ToString(), weightUnitsAbbreviation);
 			}

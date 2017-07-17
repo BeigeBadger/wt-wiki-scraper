@@ -54,7 +54,7 @@ namespace ConsoleScraper
 			_stringHelper = new StringHelper();
 			_logger = new Logger(_jsonLogger, _htmlLogger, _stringHelper, _consoleManager);
 			_dataProcessor = new DataProcessor(_consoleManager, _stringHelper, _webCrawler, _excelLogger, _logger);
-			_groundForcesScraper = new GroundForcesScraper(_webCrawler, _consoleManager);
+			_groundForcesScraper = new GroundForcesScraper(_webCrawler);
 
 			try
 			{

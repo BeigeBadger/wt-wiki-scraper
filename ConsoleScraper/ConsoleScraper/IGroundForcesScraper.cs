@@ -14,13 +14,11 @@ namespace ConsoleScraper
 
 	public class GroundForcesScraper : IGroundForcesScraper
 	{
-		private IWebCrawler _webCrawler;
-		private IConsoleManager _consoleManager;
+		private readonly IWebCrawler _webCrawler;
 
-		public GroundForcesScraper(IWebCrawler webCrawler, IConsoleManager consoleManager)
+		public GroundForcesScraper(IWebCrawler webCrawler)
 		{
 			_webCrawler = webCrawler;
-			_consoleManager = consoleManager;
 		}
 
 		public HtmlDocument GetGroundForcesWikiHomePage()

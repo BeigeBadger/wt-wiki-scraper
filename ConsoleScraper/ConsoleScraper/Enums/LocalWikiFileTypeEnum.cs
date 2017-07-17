@@ -3,7 +3,7 @@
 	public enum LocalWikiFileTypeEnum
 	{
 		Undefined = 0,
-		HTML = 1,
-		JSON = 2
+		Html = 1,
+		Json = 2
 	}
 }

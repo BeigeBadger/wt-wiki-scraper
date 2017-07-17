@@ -59,7 +59,7 @@ namespace ConsoleScraper
 
 		/// <summary>
 		/// Adds a horizontal bar to split up text sections in the console
-		/// eg. ========================================================= 
+		/// eg. =========================================================
 		/// works like the HTML HR tag
 		/// </summary>
 		void WriteHorizontalSeparator();
@@ -137,8 +137,8 @@ namespace ConsoleScraper
 
 	public class ConsoleManager : IConsoleManager
 	{
-		private const string _horizontalSeparator = "================================================================";
-		private string _currentApplicationVersion = FileVersionInfo.GetVersionInfo(System.Reflection.Assembly.GetEntryAssembly().Location).FileVersion;
+		private const string HorizontalSeparator = "================================================================";
+		private readonly string _currentApplicationVersion = FileVersionInfo.GetVersionInfo(System.Reflection.Assembly.GetEntryAssembly().Location).FileVersion;
 
 		public ConsoleManager()
 		{
@@ -215,7 +215,7 @@ namespace ConsoleScraper
 
 		public void WriteHorizontalSeparator()
 		{
-			Console.WriteLine(_horizontalSeparator);
+			Console.WriteLine(HorizontalSeparator);
 		}
 
 		public void WritePaddedHorizontalSeparator()
@@ -274,10 +274,9 @@ namespace ConsoleScraper
 
 		public void WriteInputInstructionsAndAwaitUserInput(ConsoleColor textColour, ConsoleKey expectedKey, string inputInstructions)
 		{
-
 			WriteLineInColour(textColour, inputInstructions);
 			WaitUntilKeyIsPressed(expectedKey);
 			WriteBlankLine();
 		}
 	}
-} 
+}

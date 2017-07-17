@@ -3,9 +3,9 @@
 	public enum CountryEnum
 	{
 		Undefined = 0,
-		USA = 1,
+		Usa = 1,
 		Germany = 2,
-		USSR = 3,
+		Ussr = 3,
 		GreatBritain = 4,
 		Japan = 5,
 		Italy = 6,

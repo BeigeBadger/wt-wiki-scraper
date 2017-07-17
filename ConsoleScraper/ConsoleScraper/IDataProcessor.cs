@@ -43,32 +43,38 @@ namespace ConsoleScraper
 		/// <param name="errorsList">Holds any errors that occur during execution</param>
 		/// <param name="indexPosition">The current index we are up to processing - used for error messages</param>
 		/// <param name="expectedNumberOfLinks">The expected number of links to process</param>
-		void ProcessGroundForcesWikiHtmlFiles(ConcurrentDictionary<string, HtmlDocument> vehicleWikiPagesContent, ConcurrentDictionary<string, string> localFileChanges, Dictionary<string, GroundVehicle> vehicleDetails, List<HtmlNode> vehicleWikiEntryLinks, List<string> errorsList, int indexPosition, int expectedNumberOfLinks, bool createJsonFiles, bool createHtmlFiles, bool createExcelFile);
+		/// <param name="createJsonFiles">Whether or not to output a JSON file per vehicle</param>
+		/// <param name="createHtmlFiles">Whether or not to output a HTML file per vehicle</param>
+		/// <param name="createExcelFile">Whether or not to output a Excel file per vehicle</param>
+		void ProcessGroundForcesWikiHtmlFiles(ConcurrentDictionary<string, HtmlDocument> vehicleWikiPagesContent, ConcurrentDictionary<string, string> localFileChanges,
+			Dictionary<string, GroundVehicle> vehicleDetails, List<HtmlNode> vehicleWikiEntryLinks, List<string> errorsList, int indexPosition, int expectedNumberOfLinks,
+			bool createJsonFiles, bool createHtmlFiles, bool createExcelFile);
 	}
 
 	public class DataProcessor : IDataProcessor
 	{
-		IConsoleManager _consoleManager;
-		IStringHelper _stringHelper;
-		IWebCrawler _webCrawler;
-		IExcelLogger _excelLogger;
-		ILogger _logger;
+		private readonly IConsoleManager _consoleManager;
+		private readonly IStringHelper _stringHelper;
+		private readonly IWebCrawler _webCrawler;
+		private readonly IExcelLogger _excelLogger;
+		private readonly ILogger _logger;
 
 		#region Debugging helpers
 
-		public Stopwatch webCrawlerStopwatch = new Stopwatch();
-		public Stopwatch pageHtmlRetrievalStopwatch = new Stopwatch();
-		public Stopwatch processingStopwatch = new Stopwatch();
+		private readonly Stopwatch _webCrawlerStopwatch = new Stopwatch();
+		private readonly Stopwatch _pageHtmlRetrievalStopwatch = new Stopwatch();
+		private readonly Stopwatch _processingStopwatch = new Stopwatch();
 
-		#endregion
+		#endregion Debugging helpers
 
 		// Helper objects
-		VehicleCostUnitHelper _vehicleCostUnitHelper = new VehicleCostUnitHelper();
-		VehicleSpeedUnitHelper _vehicleSpeedUnitHelper = new VehicleSpeedUnitHelper();
-		VehicleWeightUnitHelper _vehicleWeightUnitHelper = new VehicleWeightUnitHelper();
-		VehicleCountryHelper _vehicleCountryHelper = new VehicleCountryHelper();
-		GroundVehicleTypeHelper _vehicleTypeHelper = new GroundVehicleTypeHelper();
-		VehicleEnginePowerUnitHelper _vehicleEnginePowerUnitHelper = new VehicleEnginePowerUnitHelper();
+		private readonly VehicleCostUnitHelper _vehicleCostUnitHelper = new VehicleCostUnitHelper();
+
+		private readonly VehicleSpeedUnitHelper _vehicleSpeedUnitHelper = new VehicleSpeedUnitHelper();
+		private readonly VehicleWeightUnitHelper _vehicleWeightUnitHelper = new VehicleWeightUnitHelper();
+		private readonly VehicleCountryHelper _vehicleCountryHelper = new VehicleCountryHelper();
+		private readonly GroundVehicleTypeHelper _vehicleTypeHelper = new GroundVehicleTypeHelper();
+		private readonly VehicleEnginePowerUnitHelper _vehicleEnginePowerUnitHelper = new VehicleEnginePowerUnitHelper();
 
 		public DataProcessor(IConsoleManager consoleManager, IStringHelper stringHelper, IWebCrawler webCrawler, IExcelLogger excelLogger, ILogger logger)
 		{
@@ -96,32 +102,31 @@ namespace ConsoleScraper
 				// Setup initial vars
 				List<HtmlNode> vehicleWikiEntryLinks = new List<HtmlNode>();
 
-				webCrawlerStopwatch.Start();
+				_webCrawlerStopwatch.Start();
 
 				// This is outside of the method because of the recursive call and we don't want the user having to press enter more than once
 				_consoleManager.WriteInputInstructionsAndAwaitUserInput(ConsoleColor.Yellow, ConsoleKey.Enter, "Press ENTER to begin searching for links to vehicle pages.");
 
 				Dictionary<string, int> linksFound = _webCrawler.GetLinksToVehiclePages(vehicleWikiEntryLinks, wikiHomePage);
-				int totalNumberOfLinksBasedOnPageText = linksFound.Where(l => l.Key.Equals("TotalNumberOfLinksBasedOnPageText")).Single().Value;
-				int totalNumberOfLinksFoundViaDomTraversal = linksFound.Where(l => l.Key.Equals("TotalNumberOfLinksFoundViaDomTraversal")).Single().Value;
+				int totalNumberOfLinksBasedOnPageText = linksFound.Single(l => l.Key.Equals("TotalNumberOfLinksBasedOnPageText")).Value;
+				int totalNumberOfLinksFoundViaDomTraversal = linksFound.Single(l => l.Key.Equals("TotalNumberOfLinksFoundViaDomTraversal")).Value;
 
-				webCrawlerStopwatch.Stop();
+				_webCrawlerStopwatch.Stop();
 
 				// Setup thread-safe collections for processing
 				ConcurrentDictionary<int, HtmlNode> linksToVehicleWikiPages = new ConcurrentDictionary<int, HtmlNode>();
 
 				// Populate the full list of links we need to traverse
-				for (int i = 0; i < vehicleWikiEntryLinks.Count(); i++)
+				for (int i = 0; i < vehicleWikiEntryLinks.Count; i++)
 				{
 					HtmlNode linkNode = vehicleWikiEntryLinks[i];
 					linksToVehicleWikiPages.TryAdd(i, linkNode);
 				}
 
-				pageHtmlRetrievalStopwatch.Start();
+				_pageHtmlRetrievalStopwatch.Start();
 
 				// Crawl the pages concurrently
-				Task[] webCrawlerTasks = new Task[4]
-				{
+				Task[] webCrawlerTasks = {
 						// Going from 2 to 4 tasks halves the processing time, after 4 tasks the performance gain is negligible
 						Task.Factory.StartNew(() => _webCrawler.GetPageHtml(linksToVehicleWikiPages, vehicleWikiPagesContent)),
 						Task.Factory.StartNew(() => _webCrawler.GetPageHtml(linksToVehicleWikiPages, vehicleWikiPagesContent)),
@@ -134,7 +139,7 @@ namespace ConsoleScraper
 
 				_consoleManager.WritePaddedText("Finished extracting html documents from vehicle pages.");
 
-				pageHtmlRetrievalStopwatch.Stop();
+				_pageHtmlRetrievalStopwatch.Stop();
 
 				_consoleManager.WriteHorizontalSeparator();
 
@@ -142,12 +147,12 @@ namespace ConsoleScraper
 
 				int indexPosition = 1;
 
-				processingStopwatch.Start();
+				_processingStopwatch.Start();
 
 				// Extract information from the pages we've traversed
 				ProcessGroundForcesWikiHtmlFiles(vehicleWikiPagesContent, localFileChanges, vehicleDetails, vehicleWikiEntryLinks, errorsList, indexPosition, totalNumberOfLinksBasedOnPageText, createJsonFiles, createHtmlFiles, createExcelFile);
 
-				processingStopwatch.Stop();
+				_processingStopwatch.Stop();
 
 				_consoleManager.WriteLineInColourPreceededByBlankLine(ConsoleColor.Green, $"Finished processing html files for vehicle data{(createExcelFile || createHtmlFiles || createJsonFiles ? " and writing local changes." : ".")}");
 
@@ -167,7 +172,7 @@ namespace ConsoleScraper
 
 				overallStopwatch.Stop();
 
-				_consoleManager.WriteProcessingSummary(overallStopwatch.Elapsed, totalNumberOfLinksBasedOnPageText, totalNumberOfLinksFoundViaDomTraversal, vehicleDetails.Count());
+				_consoleManager.WriteProcessingSummary(overallStopwatch.Elapsed, totalNumberOfLinksBasedOnPageText, totalNumberOfLinksFoundViaDomTraversal, vehicleDetails.Count);
 			}
 		}
 
@@ -190,18 +195,14 @@ namespace ConsoleScraper
 					HtmlNode rightHandContent = wikiBody.Descendants("div").SingleOrDefault(d => d.Attributes["class"] != null && d.Attributes["class"].Value.Contains("right-area"));
 
 					// Get the able that holds all of the vehicle information | document.getElementsByClassName('flight-parameters')[0]
-					HtmlNode infoBox = rightHandContent != null
-						? rightHandContent.Descendants("table").SingleOrDefault(d => d.Attributes["class"].Value.Contains("flight-parameters"))
-						: null;
+					HtmlNode infoBox = rightHandContent?.Descendants("table").SingleOrDefault(d => d.Attributes["class"].Value.Contains("flight-parameters"));
 
 					// Name
 					string vehicleName = _stringHelper.RemoveInvalidCharacters(System.Net.WebUtility.HtmlDecode(vehicleWikiPageLinkTitle));
 
 					// Link
 					HtmlNode urlNode = vehicleWikiEntryLinks.SingleOrDefault(v => v.InnerText.Equals(vehicleName));
-					string relativeUrl = urlNode != null
-						? urlNode.Attributes["href"].Value.ToString()
-						: "";
+					string relativeUrl = urlNode?.Attributes["href"].Value ?? "";
 					string vehicleWikiEntryFullUrl = new Uri(new Uri(ConfigurationManager.AppSettings["BaseWikiUrl"]), relativeUrl).ToString();
 
 					// Fail fast and create error if there is no info box
@@ -229,63 +230,63 @@ namespace ConsoleScraper
 						_consoleManager.ResetConsoleTextColour();
 
 						// Country
-						string countryRawValue = vehicleAttributes.Single(k => k.Key == "Country").Value.ToString();
+						string countryRawValue = vehicleAttributes.Single(k => k.Key == "Country").Value;
 						CountryEnum vehicleCountry = _vehicleCountryHelper.GetVehicleCountryFromName(countryRawValue).CountryEnum;
 
 						// Weight
-						string weightRawValue = vehicleAttributes.Single(k => k.Key == "Weight").Value.ToString();
+						string weightRawValue = vehicleAttributes.Single(k => k.Key == "Weight").Value;
 						int weightWithoutUnits = int.Parse(Regex.Match(weightRawValue, @"\d+").Value);
 						string weightUnitsAbbreviation = (Regex.Matches(weightRawValue, @"\D+").Cast<Match>()).Last().Value.Trim();
 						VehicleWeightUnitHelper vehicleWeightUnit = _vehicleWeightUnitHelper.GetWeightUnitFromAbbreviation(weightUnitsAbbreviation);
 
 						// Vehicle class
-						string typeRawValue = vehicleAttributes.Single(k => k.Key == "Type").Value.ToString();
+						string typeRawValue = vehicleAttributes.Single(k => k.Key == "Type").Value;
 						GroundVehicleTypeHelper vehicleType = _vehicleTypeHelper.GetGroundVehicleTypeFromName(typeRawValue);
 
 						// Rank
-						int rankRawValue = int.Parse(vehicleAttributes.Single(k => k.Key == "Rank").Value.ToString());
+						int rankRawValue = int.Parse(vehicleAttributes.Single(k => k.Key == "Rank").Value);
 						int vehicleRank = rankRawValue;
 
 						// Battle rating
-						double ratingRawValue = double.Parse(vehicleAttributes.Single(k => k.Key == "Rating").Value.ToString());
+						double ratingRawValue = double.Parse(vehicleAttributes.Single(k => k.Key == "Rating").Value);
 						double vehicleBattleRating = ratingRawValue;
 
 						// Engine power
-						string enginePowerRawValue = vehicleAttributes.Single(k => k.Key == "Engine power").Value.ToString();
+						string enginePowerRawValue = vehicleAttributes.Single(k => k.Key == "Engine power").Value;
 						int enginePowerWithoutUnits = int.Parse(Regex.Match(enginePowerRawValue, @"\d+").Value);
 						string enginePowerUnitsAbbreviation = (Regex.Matches(enginePowerRawValue, @"\D+").Cast<Match>()).Last().Value.Trim();
 						VehicleEnginePowerUnitHelper vehicleEngineUnit = _vehicleEnginePowerUnitHelper.GetEngineUnitFromAbbreviation(enginePowerUnitsAbbreviation);
 
 						// Max speed
-						string maxSpeedRawValue = vehicleAttributes.Single(k => k.Key == "Max speed").Value.ToString();
+						string maxSpeedRawValue = vehicleAttributes.Single(k => k.Key == "Max speed").Value;
 						double maxSpeedWithoutUnits = double.Parse(Regex.Match(maxSpeedRawValue, @"\d+\.*\d*").Value);
 						string maxSpeedUnits = (Regex.Matches(maxSpeedRawValue, @"\D+").Cast<Match>()).Last().Value.Trim();
 						VehicleSpeedUnitHelper vehicleSpeedUnit = _vehicleSpeedUnitHelper.GetSpeedUnitFromAbbreviation(maxSpeedUnits);
 
 						// Hull armour
-						string hullArmourRawValue = vehicleAttributes.Single(k => k.Key == "Hull armour thickness").Value.ToString();
+						string hullArmourRawValue = vehicleAttributes.Single(k => k.Key == "Hull armour thickness").Value;
 						string vehicleHullArmourThickness = hullArmourRawValue;
 
 						// Superstructure armour
-						string superstructureArmourRawValue = vehicleAttributes.Single(k => k.Key == "Superstructure armour thickness").Value.ToString();
+						string superstructureArmourRawValue = vehicleAttributes.Single(k => k.Key == "Superstructure armour thickness").Value;
 						string vehicleSuperstructureArmourThickness = superstructureArmourRawValue;
 
 						// Repair time
-						string freeRepairTimeRawValue = vehicleAttributes.Single(k => k.Key == "Time for free repair").Value.ToString();
+						string freeRepairTimeRawValue = vehicleAttributes.Single(k => k.Key == "Time for free repair").Value;
 						List<Match> freeRepairTimeList = (Regex.Matches(freeRepairTimeRawValue, @"\d+").Cast<Match>()).ToList();
 						int freeRepairTimeHours = int.Parse(freeRepairTimeList.First().Value);
 						int freeRepairTimeMinutes = int.Parse(freeRepairTimeList.Last().Value);
 						TimeSpan vehicleFreeRepairTime = new TimeSpan(freeRepairTimeHours, freeRepairTimeMinutes, 0);
 
 						// Max repair cost
-						string maxRepairCostRawValue = vehicleAttributes.Single(k => k.Key == "Max repair cost*").Value.ToString();
+						string maxRepairCostRawValue = vehicleAttributes.Single(k => k.Key == "Max repair cost*").Value;
 						string maxRepairCostWithoutUnits = Regex.Match(maxRepairCostRawValue, @"\d+").Value;
 						string maxRepairCostUnits = (Regex.Matches(maxRepairCostRawValue, @"\D+").Cast<Match>()).Last().Value.Trim();
 						long vehicleMaxRepairCost = long.Parse(maxRepairCostWithoutUnits);
 						VehicleCostUnitHelper vehicleRepairCostUnit = _vehicleCostUnitHelper.GetCostUnitFromAbbreviation(maxRepairCostUnits);
 
 						// Purchase cost
-						string purchaseCostRawValue = vehicleAttributes.Single(k => k.Key == "Cost*").Value.ToString();
+						string purchaseCostRawValue = vehicleAttributes.Single(k => k.Key == "Cost*").Value;
 						string purchaseCostWithoutUnits = Regex.Match(purchaseCostRawValue, @"\d+").Value;
 						string purchaseCostUnits = (Regex.Matches(purchaseCostRawValue, @"\D+").Cast<Match>()).Last().Value.Trim();
 						long vehiclePurchaseCost = long.Parse(purchaseCostWithoutUnits);
@@ -322,12 +323,12 @@ namespace ConsoleScraper
 						// Update the local storage if requested
 						if (createJsonFiles)
 						{
-							_logger.UpdateLocalStorageForOfflineUse(localFileChanges, vehicleWikiPage, vehicleName, LocalWikiFileTypeEnum.JSON, groundVehicle);
+							_logger.UpdateLocalStorageForOfflineUse(localFileChanges, vehicleWikiPage, vehicleName, LocalWikiFileTypeEnum.Json, groundVehicle);
 						}
 
 						if (createHtmlFiles)
 						{
-							_logger.UpdateLocalStorageForOfflineUse(localFileChanges, vehicleWikiPage, vehicleName, LocalWikiFileTypeEnum.HTML, null);
+							_logger.UpdateLocalStorageForOfflineUse(localFileChanges, vehicleWikiPage, vehicleName, LocalWikiFileTypeEnum.Html);
 						}
 
 						//WikiEntry entry = new WikiEntry(vehicleName, vehicleWikiEntryFullUrl, VehicleTypeEnum.Ground, vehicleInfo);
