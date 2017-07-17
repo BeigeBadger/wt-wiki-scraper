@@ -12,70 +12,69 @@ namespace ConsoleScraper
 		/** Thread-safe collections **/
 
 		// Populated with the vehicle name as the key and the HTML content of the page as the value
-		public static ConcurrentDictionary<string, HtmlDocument> vehicleWikiPagesContent = new ConcurrentDictionary<string, HtmlDocument>();
+		private static readonly ConcurrentDictionary<string, HtmlDocument> VehicleWikiPagesContent = new ConcurrentDictionary<string, HtmlDocument>();
 
 		// Keeps track of changes made to local files, vehicle name as the key, and the action performed as the value
-		public static ConcurrentDictionary<string, string> localFileChanges = new ConcurrentDictionary<string, string>();
+		private static readonly ConcurrentDictionary<string, string> LocalFileChanges = new ConcurrentDictionary<string, string>();
 
 		// Populated with the vehicle name and vehicle objects
-		public static Dictionary<string, GroundVehicle> vehicleDetails = new Dictionary<string, GroundVehicle>();
+		private static readonly Dictionary<string, GroundVehicle> VehicleDetails = new Dictionary<string, GroundVehicle>();
 
-		public static List<string> errorsList = new List<string>();
+		private static readonly List<string> ErrorsList = new List<string>();
 
-		public static ConsoleManager ConsoleManager;
-		public static ExcelLogger ExcelLogger;
-		public static FilePerVehicleLogger FilePerVehicleLogger;
-		public static HtmlLogger HtmlLogger;
-		public static JsonLogger JsonLogger;
-		public static WebCrawler WebCrawler;
-		public static StringHelper StringHelper;
-		public static Logger Logger;
-		public static DataProcessor DataProcessor;
-		public static GroundForcesScraper GroundForcesScraper;
+		private static ConsoleManager _consoleManager;
+		private static ExcelLogger _excelLogger;
+		private static FilePerVehicleLogger _filePerVehicleLogger;
+		private static HtmlLogger _htmlLogger;
+		private static JsonLogger _jsonLogger;
+		private static WebCrawler _webCrawler;
+		private static StringHelper _stringHelper;
+		private static Logger _logger;
+		private static DataProcessor _dataProcessor;
+		private static GroundForcesScraper _groundForcesScraper;
 
-		public static bool CreateJsonFiles = true;
-		public static bool CreateHtmlFiles = true;
-		public static bool CreateExcelFile = true;
+		private static bool _createJsonFiles = true;
+		private static bool _createHtmlFiles = true;
+		private static bool _createExcelFile = true;
 
 		#region Debugging helpers
 
-		public static Stopwatch overallStopwatch = new Stopwatch();
+		private static readonly Stopwatch OverallStopwatch = new Stopwatch();
 
 		#endregion Debugging helpers
 
-		private static void Main(string[] args)
+		private static void Main()
 		{
-			ConsoleManager = new ConsoleManager();
-			ExcelLogger = new ExcelLogger();
-			FilePerVehicleLogger = new FilePerVehicleLogger(ConsoleManager);
-			HtmlLogger = new HtmlLogger(FilePerVehicleLogger, ConsoleManager);
-			JsonLogger = new JsonLogger(FilePerVehicleLogger, ConsoleManager);
-			WebCrawler = new WebCrawler(ConsoleManager);
-			StringHelper = new StringHelper();
-			Logger = new Logger(JsonLogger, HtmlLogger, StringHelper, ConsoleManager);
-			DataProcessor = new DataProcessor(ConsoleManager, StringHelper, WebCrawler, ExcelLogger, Logger);
-			GroundForcesScraper = new GroundForcesScraper(WebCrawler, ConsoleManager);
+			_consoleManager = new ConsoleManager();
+			_excelLogger = new ExcelLogger();
+			_filePerVehicleLogger = new FilePerVehicleLogger(_consoleManager);
+			_htmlLogger = new HtmlLogger(_filePerVehicleLogger, _consoleManager);
+			_jsonLogger = new JsonLogger(_filePerVehicleLogger, _consoleManager);
+			_webCrawler = new WebCrawler(_consoleManager);
+			_stringHelper = new StringHelper();
+			_logger = new Logger(_jsonLogger, _htmlLogger, _stringHelper, _consoleManager);
+			_dataProcessor = new DataProcessor(_consoleManager, _stringHelper, _webCrawler, _excelLogger, _logger);
+			_groundForcesScraper = new GroundForcesScraper(_webCrawler, _consoleManager);
 
 			try
 			{
-				overallStopwatch.Start();
+				OverallStopwatch.Start();
 
-				ConsoleManager.WriteProgramTitleVersionAndInitialBlurb();
-				ConsoleManager.WriteInputInstructionsAndAwaitUserInput(ConsoleColor.Yellow, ConsoleKey.Enter, "Press ENTER to begin.");
+				_consoleManager.WriteProgramTitleVersionAndInitialBlurb();
+				_consoleManager.WriteInputInstructionsAndAwaitUserInput(ConsoleColor.Yellow, ConsoleKey.Enter, "Press ENTER to begin.");
 
 				// Load Wiki Home page
-				HtmlDocument groundForcesWikiHomePage = GroundForcesScraper.GetGroundForcesWikiHomePage();
+				HtmlDocument groundForcesWikiHomePage = _groundForcesScraper.GetGroundForcesWikiHomePage();
 
 				// Crawl ground forces
-				// TODO: Move of these parameters can be moved into DataProcessor as they aren't used againw
-				DataProcessor.CrawlWikiSectionPagesForData(groundForcesWikiHomePage, vehicleWikiPagesContent, localFileChanges, vehicleDetails, errorsList,
-					overallStopwatch, CreateJsonFiles, CreateHtmlFiles, CreateExcelFile);
+				// TODO: Some of these parameters can be moved into DataProcessor as they aren't used again
+				_dataProcessor.CrawlWikiSectionPagesForData(groundForcesWikiHomePage, VehicleWikiPagesContent, LocalFileChanges, VehicleDetails, ErrorsList, OverallStopwatch, _createJsonFiles, _createHtmlFiles, _createExcelFile);
 
-				ConsoleManager.WriteExitInstructions();
+				_consoleManager.WriteExitInstructions();
 			}
 			catch (Exception ex)
 			{
-				ConsoleManager.WriteException($"The following exception was encounted: {ex.Message}\r\nException details: {ex.StackTrace}");
+				_consoleManager.WriteException($"The following exception was encounted: {ex.Message}\r\nException details: {ex.StackTrace}");
 			}
 		}
 	}
