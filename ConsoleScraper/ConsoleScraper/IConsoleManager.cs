@@ -13,7 +13,7 @@ namespace ConsoleScraper
 		/// <param name="createJsonFiles">Initial value of whether we want to create JSON files</param>
 		/// <param name="createHtmlFiles">Initial value of whether we want to create HTML files</param>
 		/// <param name="createExcelFiles">Initial value of whether we want to create EXCEL files</param>
-		void HandleCreateFileTypePrompts(bool createJsonFiles, bool createHtmlFiles, bool createExcelFiles);
+		void HandleCreateFileTypePrompts(out bool createJsonFiles, out bool createHtmlFiles, out bool createExcelFiles);
 
 		/// <summary>
 		/// Writes out any parse errors to the console
@@ -144,7 +144,7 @@ namespace ConsoleScraper
 		{
 		}
 
-		public void HandleCreateFileTypePrompts(bool createJsonFiles, bool createHtmlFiles, bool createExcelFile)
+		public void HandleCreateFileTypePrompts(out bool createJsonFiles, out bool createHtmlFiles, out bool createExcelFile)
 		{
 			WriteLineInColour(ConsoleColor.Yellow, "Would you like to create JSON files for each vehicle locally? Enter Y [default] or N.");
 			createJsonFiles = IsPressedKeyExpectedKey(ConsoleKey.Y);

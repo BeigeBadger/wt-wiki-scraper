@@ -87,6 +87,7 @@ namespace ConsoleScraper
 
 		// TODO: VehicleDetails will have to be changed to take an IVehicle as the value data type
 		// TODO: Pass in Enum of vehicle type to use for the processing call
+		// TODO: Fix message on bool createFile parameters - maybe refactor
 		public void CrawlWikiSectionPagesForData(HtmlDocument wikiHomePage, ConcurrentDictionary<string, HtmlDocument> vehicleWikiPagesContent,
 			ConcurrentDictionary<string, string> localFileChanges, Dictionary<string, GroundVehicle> vehicleDetails, List<string> errorsList,
 			Stopwatch overallStopwatch, bool createJsonFiles, bool createHtmlFiles, bool createExcelFile)
@@ -143,7 +144,7 @@ namespace ConsoleScraper
 
 				_consoleManager.WriteHorizontalSeparator();
 
-				_consoleManager.HandleCreateFileTypePrompts(createJsonFiles, createHtmlFiles, createExcelFile);
+				_consoleManager.HandleCreateFileTypePrompts(out createJsonFiles, out createHtmlFiles, out createExcelFile);
 
 				int indexPosition = 1;
 
