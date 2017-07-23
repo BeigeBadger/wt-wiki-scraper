@@ -69,6 +69,7 @@ namespace ConsoleScraper
 
 		public void HandleProcessingErrors(List<string> errorsList)
 		{
+			// TODO: Move this to App.config
 			string errorFilePath = $"{ConfigurationManager.AppSettings["LocalWikiRootPath"]}Errors.txt";
 
 			_consoleManager.WriteLineInColour(ConsoleColor.Red, $"The following error{(errorsList.Count > 1 ? "s were" : "was")} encountered:", false);

@@ -6,6 +6,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -126,6 +127,8 @@ namespace ConsoleScraper
 
 				_pageHtmlRetrievalStopwatch.Start();
 
+				_consoleManager.WriteLineInColourPreceededByBlankLine(ConsoleColor.Green, "Attempting to extract the vehicle pages as HTML documents.");
+
 				// Crawl the pages concurrently
 				Task[] webCrawlerTasks = {
 						// Going from 2 to 4 tasks halves the processing time, after 4 tasks the performance gain is negligible
@@ -138,7 +141,7 @@ namespace ConsoleScraper
 				// Wait until we have crawled all of the pages
 				Task.WaitAll(webCrawlerTasks);
 
-				_consoleManager.WritePaddedText("Finished extracting html documents from vehicle pages.");
+				_consoleManager.WriteLineInColourPreceededByBlankLine(ConsoleColor.Green, "Finished extracting the vehicle pages as HTML documents.");
 
 				_pageHtmlRetrievalStopwatch.Stop();
 
@@ -167,13 +170,17 @@ namespace ConsoleScraper
 				if (errorsList.Any())
 				{
 					_logger.HandleProcessingErrors(errorsList);
+
+					string errorFilePath = Path.GetFullPath($"{ConfigurationManager.AppSettings["LocalWikiRootPath"]}Errors.txt");
+
+					_consoleManager.WritePaddedText($"An error log has stored in {errorFilePath}.");
 				}
 
 				_consoleManager.WriteHorizontalSeparator();
 
 				overallStopwatch.Stop();
 
-				_consoleManager.WriteProcessingSummary(overallStopwatch.Elapsed, totalNumberOfLinksBasedOnPageText, totalNumberOfLinksFoundViaDomTraversal, vehicleDetails.Count);
+				_consoleManager.WriteProcessingSummary(overallStopwatch.Elapsed, totalNumberOfLinksBasedOnPageText, totalNumberOfLinksFoundViaDomTraversal, vehicleDetails.Count, errorsList.Count);
 			}
 		}
 

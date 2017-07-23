@@ -1,6 +1,8 @@
 ﻿using HtmlAgilityPack;
 using System;
+using System.Configuration;
 using System.Diagnostics;
+using System.IO;
 
 namespace ConsoleScraper
 {
@@ -85,7 +87,8 @@ namespace ConsoleScraper
 		/// <param name="expectedLinksTotal">The number of links we expected to find (taken from page text)</param>
 		/// <param name="foundLinksTotal">The number of links we actually found (via scraping)</param>
 		/// <param name="vehicleObjectsCreated">How many vehicle objects were created</param>
-		void WriteProcessingSummary(TimeSpan runTime, int expectedLinksTotal, int foundLinksTotal, int vehicleObjectsCreated);
+		/// <param name="errorsEncountered">How many errors were encountered</param>
+		void WriteProcessingSummary(TimeSpan runTime, int expectedLinksTotal, int foundLinksTotal, int vehicleObjectsCreated, int errorsEncountered);
 
 		/// <summary>
 		/// Will write the specified text to the console using the
@@ -146,17 +149,21 @@ namespace ConsoleScraper
 
 		public void HandleCreateFileTypePrompts(out bool createJsonFiles, out bool createHtmlFiles, out bool createExcelFile)
 		{
-			WriteLineInColour(ConsoleColor.Yellow, "Would you like to create JSON files for each vehicle locally? Enter Y [default] or N.");
+			// TODO: Make more DRY
+			WriteLineInColour(ConsoleColor.Yellow, "Would you like a JSON file to be created on your local machine for each vehicle that was found? Enter Y [default] or N.");
 			createJsonFiles = IsPressedKeyExpectedKey(ConsoleKey.Y);
-			WriteLineInColourFollowedByBlankLine(ConsoleColor.Green, $"Will{(createJsonFiles ? " " : " not ")}create JSON files.");
+			string jsonPath = Path.GetFullPath(ConfigurationManager.AppSettings["LocalWikiJsonPath"]);
+			WriteLineInColourFollowedByBlankLine(ConsoleColor.Green, $"JSON files will {(createJsonFiles ? "" : "not")} be created {(createJsonFiles ? $"in {jsonPath}" : "")}.");
 
-			WriteLineInColour(ConsoleColor.Yellow, "Would you like to create HTML files for each vehicle locally? Enter Y [default] or N.");
+			WriteLineInColour(ConsoleColor.Yellow, "Would you like an HTML file to be created on your local machine for each vehicle that was found? Enter Y [default] or N.");
 			createHtmlFiles = IsPressedKeyExpectedKey(ConsoleKey.Y);
-			WriteLineInColourFollowedByBlankLine(ConsoleColor.Green, $"Will{(createHtmlFiles ? " " : " not ")}create HTML files.");
+			string htmlPath = Path.GetFullPath(ConfigurationManager.AppSettings["LocalWikiHtmlPath"]);
+			WriteLineInColourFollowedByBlankLine(ConsoleColor.Green, $"HTML files will {(createHtmlFiles ? "" : "not")} be created {(createHtmlFiles ? $"in {htmlPath}" : "")}.");
 
-			WriteLineInColour(ConsoleColor.Yellow, "Would you like to create an Excel file with all of the vehicle data? Enter Y [default] or N.");
+			WriteLineInColour(ConsoleColor.Yellow, "Would you like an Excel file to be created on your location machine with all of the vehicle data for the vehicles that were found? Enter Y [default] or N.");
 			createExcelFile = IsPressedKeyExpectedKey(ConsoleKey.Y);
-			WriteLineInColourFollowedByBlankLine(ConsoleColor.Green, $"Will{(createExcelFile ? " " : " not ")}create Excel file.");
+			string excelPath = Path.GetFullPath(ConfigurationManager.AppSettings["LocalWikiExcelPath"]);
+			WriteLineInColourFollowedByBlankLine(ConsoleColor.Green, $"An Excel file will {(createExcelFile ? "" : "not")} be created {(createExcelFile ? $"in {excelPath}" : "")}.");
 		}
 
 		public void HandleHtmlParseErrors(HtmlDocument htmlDocument)
@@ -232,10 +239,12 @@ namespace ConsoleScraper
 			WriteBlankLine();
 		}
 
-		public void WriteProcessingSummary(TimeSpan runTime, int expectedLinksTotal, int foundLinksTotal, int vehicleObjectsCreated)
+		public void WriteProcessingSummary(TimeSpan runTime, int expectedLinksTotal, int foundLinksTotal, int vehicleObjectsCreated, int errorsEncountered)
 		{
 			WriteTextLine($"Completed in {runTime.Hours:00}:{runTime.Minutes:00}:{runTime.Seconds:00}");
-			WriteTextLine($"Expected total: {expectedLinksTotal}, Actual total: {foundLinksTotal}");
+			WriteTextLine($"Expected total: {expectedLinksTotal}");
+			WriteTextLine($"Actual total: {foundLinksTotal}");
+			WriteTextLine($"Errors encountered: {errorsEncountered}");
 			WriteTextLine($"Vehicle objects created: {vehicleObjectsCreated} (should be Actual - Errors)");
 		}
 

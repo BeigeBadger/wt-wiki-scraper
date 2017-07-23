@@ -142,8 +142,9 @@ namespace ConsoleScraper
 
 				// Write out the vehicle name and url
 				_consoleManager.WriteBlankLine();
-				_consoleManager.WriteTextLine($"Processing... {vehicleName}");
-				_consoleManager.WriteTextLine($"Vehicle: {vehicleName}, Url: {vehicleWikiEntryFullUrl}");
+				_consoleManager.WriteTextLine($"Attempting to scrape information for... {vehicleName}");
+				_consoleManager.WriteTextLine($"Vehicle: {vehicleName}");
+				_consoleManager.WriteTextLine($"Url: {vehicleWikiEntryFullUrl}");
 
 				// Visit page and extract data
 				HtmlWeb vehicleWebGet = new HtmlWeb();
