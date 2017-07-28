@@ -1,9 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using HtmlAgilityPack;
+﻿using ConsoleScraper.Logging;
 using ConsoleScraper.Models;
-using System.Diagnostics;
+using ConsoleScraper.Util;
+using ConsoleScraper.Util.Crawlers;
+using ConsoleScraper.Util.Processors;
+using ConsoleScraper.Util.Scrapers;
+using HtmlAgilityPack;
+using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace ConsoleScraper
 {

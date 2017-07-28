@@ -1,25 +1,9 @@
 ﻿using ConsoleScraper.Enums;
+using ConsoleScraper.Models.Interfaces;
+using ConsoleScraper.Util.Interfaces;
 
-namespace ConsoleScraper.Models
+namespace ConsoleScraper.Util.ParsingHelpers
 {
-	public interface IGroundVehicleTypeHelper
-	{
-		#region Properties
-
-		int Id { get; set; }
-		GroundVehicleTypeEnum VehicleType { get; set; }
-		string Name { get; set; }
-		string Abbreviation { get; set; }
-
-		#endregion Properties
-
-		#region Methods
-
-		GroundVehicleTypeHelper GetGroundVehicleTypeFromName(string groundVehicleTypeName);
-
-		#endregion Methods
-	}
-
 	public class GroundVehicleTypeHelper : IVehicleStatisticalUnit, IGroundVehicleTypeHelper
 	{
 		public int Id { get; set; }

@@ -1,4 +1,4 @@
-﻿namespace ConsoleScraper.Models
+﻿namespace ConsoleScraper.Models.Interfaces
 {
 	public interface IVehicleStatisticalUnit
 	{

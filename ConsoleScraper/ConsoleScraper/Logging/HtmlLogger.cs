@@ -1,4 +1,5 @@
 ﻿using ConsoleScraper.Enums;
+using ConsoleScraper.Logging.Interfaces;
 using HtmlAgilityPack;
 using System;
 using System.Collections.Concurrent;
@@ -6,23 +7,10 @@ using System.Configuration;
 using System.IO;
 using System.Linq;
 using System.Text;
+using ConsoleScraper.Util.Interfaces;
 
-namespace ConsoleScraper
+namespace ConsoleScraper.Logging
 {
-	public interface IHtmlLogger
-	{
-		/// <summary>
-		/// Creates an HTML file in the local wiki using info
-		/// scraped from the wiki entry
-		/// </summary>
-		/// <param name="localFileChanges">The dictionary that holds all of the local changes</param>
-		/// <param name="vehicleWikiPage">HTML document that represents the wiki page</param>
-		/// <param name="vehicleName">Name of the vehicle the page is for</param>
-		/// <param name="fileName">What the file should be called</param>
-		/// <param name="filePath">Where the file should be stored</param>
-		void CreateHtmlFile(ConcurrentDictionary<string, string> localFileChanges, HtmlDocument vehicleWikiPage, string vehicleName, string fileName, string filePath);
-	}
-
 	public class HtmlLogger : IHtmlLogger
 	{
 		private readonly IFilePerVehicleLogger _filePerVehicleLogger;

@@ -1,25 +1,9 @@
 ﻿using ConsoleScraper.Enums;
+using ConsoleScraper.Models.Interfaces;
+using ConsoleScraper.Util.Interfaces;
 
-namespace ConsoleScraper.Models
+namespace ConsoleScraper.Util.ParsingHelpers
 {
-	public interface IVehicleWeightUnitHelper
-	{
-		#region Properties
-
-		int Id { get; set; }
-		VehicleWeightUnitEnum WeightUnit { get; set; }
-		string Name { get; set; }
-		string Abbreviation { get; set; }
-
-		#endregion Properties
-
-		#region Methods
-
-		VehicleWeightUnitHelper GetWeightUnitFromAbbreviation(string weightUnitsAbbreviation);
-
-		#endregion Methods
-	}
-
 	public class VehicleWeightUnitHelper : IVehicleStatisticalUnit, IVehicleWeightUnitHelper
 	{
 		public int Id { get; set; }

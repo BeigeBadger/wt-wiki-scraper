@@ -1,6 +1,7 @@
 ﻿using ConsoleScraper.Enums;
+using ConsoleScraper.Util.ParsingHelpers;
 
-namespace ConsoleScraper.Models
+namespace ConsoleScraper.Models.Interfaces
 {
 	public interface IVehicle
 	{

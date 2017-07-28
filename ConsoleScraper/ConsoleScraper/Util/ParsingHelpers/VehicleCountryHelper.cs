@@ -1,27 +1,9 @@
 ﻿using ConsoleScraper.Enums;
+using ConsoleScraper.Models.Interfaces;
+using ConsoleScraper.Util.Interfaces;
 
-namespace ConsoleScraper.Models
+namespace ConsoleScraper.Util.ParsingHelpers
 {
-	public interface IVehicleCountryHelper
-	{
-		#region Properties
-
-		int Id { get; set; }
-		CountryEnum CountryEnum { get; set; }
-		string Name { get; set; }
-		string Abbreviation { get; set; }
-
-		#endregion Properties
-
-		#region Methods
-
-		VehicleCountryHelper GetVehicleCountryFromAbbreviation(string countryAbbreviation);
-
-		VehicleCountryHelper GetVehicleCountryFromName(string countryName);
-
-		#endregion Methods
-	}
-
 	public class VehicleCountryHelper : IVehicleStatisticalUnit, IVehicleCountryHelper
 	{
 		public int Id { get; set; }

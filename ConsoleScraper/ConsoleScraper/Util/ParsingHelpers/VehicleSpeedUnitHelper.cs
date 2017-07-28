@@ -1,25 +1,9 @@
 ﻿using ConsoleScraper.Enums;
+using ConsoleScraper.Models.Interfaces;
+using ConsoleScraper.Util.Interfaces;
 
-namespace ConsoleScraper.Models
+namespace ConsoleScraper.Util.ParsingHelpers
 {
-	public interface IVehicleSpeedUnitHelper
-	{
-		#region Properties
-
-		int Id { get; set; }
-		VehicleSpeedUnitEnum SpeedUnit { get; set; }
-		string Name { get; set; }
-		string Abbreviation { get; set; }
-
-		#endregion Properties
-
-		#region Methods
-
-		VehicleSpeedUnitHelper GetSpeedUnitFromAbbreviation(string maxSpeedUnitAbbreviation);
-
-		#endregion Methods
-	}
-
 	public class VehicleSpeedUnitHelper : IVehicleStatisticalUnit, IVehicleSpeedUnitHelper
 	{
 		public int Id { get; set; }

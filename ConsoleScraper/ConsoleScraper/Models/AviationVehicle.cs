@@ -1,25 +1,10 @@
-﻿using System;
-using ConsoleScraper.Enums;
+﻿using ConsoleScraper.Enums;
+using ConsoleScraper.Models.Interfaces;
+using ConsoleScraper.Util.ParsingHelpers;
+using System;
 
 namespace ConsoleScraper.Models
 {
-	public interface IAviationVehicle : IVehicle
-	{
-		#region Properties
-
-		AviationVehicleTypeEnum AviationVehicleType { get; set; }
-
-		int MaxAltitude { get; set; }
-		double TurnTime { get; set; }
-		int TakeOffDistance { get; set; }
-		string ClimbTime { get; set; }
-		double ClimbRate { get; set; }
-		TimeSpan TimeForFreeRepair { get; set; }
-		VehicleEnginePowerUnitHelper EnginePowerUnit { get; set; }
-
-		#endregion Properties
-	}
-
 	public class AviationVehicle : Vehicle, IAviationVehicle
 	{
 		// TODO: Needs reference to Vehicle

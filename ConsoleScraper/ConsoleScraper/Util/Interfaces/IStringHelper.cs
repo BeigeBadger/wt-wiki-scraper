@@ -1,7 +1,4 @@
-﻿using System.IO;
-using System.Linq;
-
-namespace ConsoleScraper
+﻿namespace ConsoleScraper.Util.Interfaces
 {
 	public interface IStringHelper
 	{
@@ -11,22 +8,5 @@ namespace ConsoleScraper
 		/// <param name="dirtyString">The string which could potentially have invalid characters in it</param>
 		/// <returns>A string which is valid for file system pathing</returns>
 		string RemoveInvalidCharacters(string dirtyString);
-	}
-
-	public class StringHelper : IStringHelper
-	{
-		public StringHelper()
-		{
-		}
-
-		public string RemoveInvalidCharacters(string dirtyString)
-		{
-			var invalidChars = Path.GetInvalidFileNameChars();
-
-			return new string(dirtyString
-				.Where(x => !invalidChars.Contains(x))
-				.ToArray()
-			);
-		}
 	}
 }

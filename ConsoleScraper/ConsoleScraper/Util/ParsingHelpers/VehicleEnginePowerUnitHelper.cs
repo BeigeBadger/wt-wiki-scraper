@@ -1,21 +1,9 @@
 ﻿using ConsoleScraper.Enums;
+using ConsoleScraper.Models.Interfaces;
+using ConsoleScraper.Util.Interfaces;
 
-namespace ConsoleScraper.Models
+namespace ConsoleScraper.Util.ParsingHelpers
 {
-	public interface IVehicleEnginePowerUnitHelper
-	{
-		#region Properties
-		int Id { get; set; }
-		VehicleEnginePowerUnitEnum EnginePowerUnit { get; set; }
-		string Name { get; set; }
-		string Abbreviation { get; set; }
-		#endregion
-
-		#region Methods
-		VehicleEnginePowerUnitHelper GetEngineUnitFromAbbreviation(string enginePowerUnitsAbbreviation);
-		#endregion
-	}
-
 	public class VehicleEnginePowerUnitHelper : IVehicleStatisticalUnit, IVehicleEnginePowerUnitHelper
 	{
 		public int Id { get; set; }
@@ -23,7 +11,9 @@ namespace ConsoleScraper.Models
 		public string Name { get; set; }
 		public string Abbreviation { get; set; }
 
-		public VehicleEnginePowerUnitHelper() { }
+		public VehicleEnginePowerUnitHelper()
+		{
+		}
 
 		private VehicleEnginePowerUnitHelper(VehicleEnginePowerUnitEnum unitEnum, string name, string abbreviation)
 		{
