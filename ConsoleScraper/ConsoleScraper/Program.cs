@@ -11,8 +11,6 @@ namespace ConsoleScraper
 {
 	internal class Program
 	{
-		/** Thread-safe collections **/
-
 		private static ConsoleManager _consoleManager;
 		private static ExcelLogger _excelLogger;
 		private static FilePerVehicleLogger _filePerVehicleLogger;
