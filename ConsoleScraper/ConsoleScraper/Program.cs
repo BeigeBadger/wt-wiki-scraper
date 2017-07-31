@@ -1,13 +1,10 @@
 ﻿using ConsoleScraper.Logging;
-using ConsoleScraper.Models;
 using ConsoleScraper.Util;
 using ConsoleScraper.Util.Crawlers;
 using ConsoleScraper.Util.Processors;
 using ConsoleScraper.Util.Scrapers;
 using HtmlAgilityPack;
 using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace ConsoleScraper
@@ -15,17 +12,6 @@ namespace ConsoleScraper
 	internal class Program
 	{
 		/** Thread-safe collections **/
-
-		// Populated with the vehicle name as the key and the HTML content of the page as the value
-		private static readonly ConcurrentDictionary<string, HtmlDocument> VehicleWikiPagesContent = new ConcurrentDictionary<string, HtmlDocument>();
-
-		// Keeps track of changes made to local files, vehicle name as the key, and the action performed as the value
-		private static readonly ConcurrentDictionary<string, string> LocalFileChanges = new ConcurrentDictionary<string, string>();
-
-		// Populated with the vehicle name and vehicle objects
-		private static readonly Dictionary<string, GroundVehicle> VehicleDetails = new Dictionary<string, GroundVehicle>();
-
-		private static readonly List<string> ErrorsList = new List<string>();
 
 		private static ConsoleManager _consoleManager;
 		private static ExcelLogger _excelLogger;
@@ -37,10 +23,6 @@ namespace ConsoleScraper
 		private static Logger _logger;
 		private static DataProcessor _dataProcessor;
 		private static GroundForcesScraper _groundForcesScraper;
-
-		private static bool _createJsonFiles = true;
-		private static bool _createHtmlFiles = true;
-		private static bool _createExcelFile = true;
 
 		#region Debugging helpers
 
@@ -73,8 +55,14 @@ namespace ConsoleScraper
 
 				// Crawl ground forces
 				// TODO: Some of these parameters can be moved into DataProcessor as they aren't used again
-				_dataProcessor.CrawlWikiSectionPagesForData(groundForcesWikiHomePage, VehicleWikiPagesContent, LocalFileChanges, VehicleDetails, ErrorsList, OverallStopwatch, _createJsonFiles, _createHtmlFiles, _createExcelFile);
+				_dataProcessor.CrawlWikiSectionPagesForData(groundForcesWikiHomePage);
 
+				OverallStopwatch.Stop();
+
+				TimeSpan elapsedTime = OverallStopwatch.Elapsed;
+
+				// TODO: Add console manage method for this
+				_consoleManager.WriteTextLine($"Completed in {elapsedTime.Hours:00}:{elapsedTime.Minutes:00}:{elapsedTime.Seconds:00}");
 				_consoleManager.WriteExitInstructions();
 			}
 			catch (Exception ex)

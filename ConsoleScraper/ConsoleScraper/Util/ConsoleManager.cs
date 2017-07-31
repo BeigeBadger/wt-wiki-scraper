@@ -1,9 +1,9 @@
-﻿using HtmlAgilityPack;
+﻿using ConsoleScraper.Util.Interfaces;
+using HtmlAgilityPack;
 using System;
 using System.Configuration;
 using System.Diagnostics;
 using System.IO;
-using ConsoleScraper.Util.Interfaces;
 
 namespace ConsoleScraper.Util
 {
@@ -108,9 +108,8 @@ namespace ConsoleScraper.Util
 			WriteBlankLine();
 		}
 
-		public void WriteProcessingSummary(TimeSpan runTime, int expectedLinksTotal, int foundLinksTotal, int vehicleObjectsCreated, int errorsEncountered)
+		public void WriteProcessingSummary(int expectedLinksTotal, int foundLinksTotal, int vehicleObjectsCreated, int errorsEncountered)
 		{
-			WriteTextLine($"Completed in {runTime.Hours:00}:{runTime.Minutes:00}:{runTime.Seconds:00}");
 			WriteTextLine($"Expected total: {expectedLinksTotal}");
 			WriteTextLine($"Actual total: {foundLinksTotal}");
 			WriteTextLine($"Errors encountered: {errorsEncountered}");

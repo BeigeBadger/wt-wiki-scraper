@@ -1,5 +1,5 @@
-﻿using System;
-using HtmlAgilityPack;
+﻿using HtmlAgilityPack;
+using System;
 
 namespace ConsoleScraper.Util.Interfaces
 {
@@ -80,12 +80,11 @@ namespace ConsoleScraper.Util.Interfaces
 		/// <summary>
 		/// Writes out how long the program took to execute and other statistics
 		/// </summary>
-		/// <param name="runTime">How long it took to run</param>
 		/// <param name="expectedLinksTotal">The number of links we expected to find (taken from page text)</param>
 		/// <param name="foundLinksTotal">The number of links we actually found (via scraping)</param>
 		/// <param name="vehicleObjectsCreated">How many vehicle objects were created</param>
 		/// <param name="errorsEncountered">How many errors were encountered</param>
-		void WriteProcessingSummary(TimeSpan runTime, int expectedLinksTotal, int foundLinksTotal, int vehicleObjectsCreated, int errorsEncountered);
+		void WriteProcessingSummary(int expectedLinksTotal, int foundLinksTotal, int vehicleObjectsCreated, int errorsEncountered);
 
 		/// <summary>
 		/// Will write the specified text to the console using the
